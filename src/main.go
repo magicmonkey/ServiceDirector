@@ -10,5 +10,5 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Printf("Hello world!")dsfvdsvf
+	fmt.Printf("Hello world!")
 }
