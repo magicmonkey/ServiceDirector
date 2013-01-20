@@ -1,8 +1,17 @@
 package ServiceRegistry
 
-type ServiceVersion struct {
+type Version struct {
 	major    int
 	minor    int
 	micro    int
-	location []ServiceLocation
+}
+
+type ServiceInstance struct {
+	Version  Version
+	Location ServiceLocation
+}
+
+type ServiceVersion struct {
+	v         Version
+	locations []ServiceLocation
 }
