@@ -10,11 +10,30 @@ func main() {
 	a := ServiceRegistry.NewService("TestService")
 	b := ServiceRegistry.NewService("SomeOtherService")
 
-	u, _ := url.Parse("http://localhost:123/blah")
-	version := ServiceRegistry.NewVersion(1, 24, 37)
-	loc := ServiceRegistry.NewLocation(u)
-	a.AddServiceInstance(version, loc)
+	var u *url.URL
+	var v ServiceRegistry.Version
+	var loc ServiceRegistry.ServiceLocation
+
+	u, _ = url.Parse("http://localhost:123/blah")
+	v = ServiceRegistry.NewVersion(1, 24, 37)
+	loc = ServiceRegistry.NewLocation(u)
+	a.AddServiceInstance(v, loc)
+
+	u, _ = url.Parse("http://10.1.0.1:1237/blah")
+	v = ServiceRegistry.NewVersion(1, 0, 0)
+	loc = ServiceRegistry.NewLocation(u)
+	b.AddServiceInstance(v, loc)
+
+	u, _ = url.Parse("http://10.1.0.1:1238/blah")
+	v = ServiceRegistry.NewVersion(1, 0, 0)
+	loc = ServiceRegistry.NewLocation(u)
+	b.AddServiceInstance(v, loc)
+
+	u, _ = url.Parse("http://10.1.0.1:1239/blah")
+	v = ServiceRegistry.NewVersion(1, 1, 0)
+	loc = ServiceRegistry.NewLocation(u)
+	b.AddServiceInstance(v, loc)
 
 	fmt.Printf(a.Name + ": %d versions\n", len(a.Versions))
-	fmt.Printf(b.Name + "\n")
+	fmt.Printf(b.Name + ": %d versions\n", len(b.Versions))
 }

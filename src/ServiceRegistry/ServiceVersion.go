@@ -1,9 +1,9 @@
 package ServiceRegistry
 
 type Version struct {
-	major    int
-	minor    int
-	micro    int
+	Major    int
+	Minor    int
+	Micro    int
 }
 
 type ServiceInstance struct {
