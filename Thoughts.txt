@@ -1,0 +1,10 @@
+* Replication between nodes based on Gob
+* "Master" nodes persist to Redis
+* Can allow or disallow writing to slave nodes
+* HTTP interface for updating
+* Client load-balancing
+* API health-checks
+* Monitoring by an external program (eg OpsView)
+* Non-HTTP APIs (MySQL, Mongo, Redis etc)
+* Configurable "stability ladder"
+* Best possible version 1.x.x or 1.3.x, in state "beta" or "stable" etc

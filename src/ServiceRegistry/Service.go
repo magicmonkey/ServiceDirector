@@ -2,12 +2,55 @@ package ServiceRegistry
 
 import (
 	"net/url"
-	"fmt"
 )
+
+type Version struct {
+	Major    int
+	Minor    int
+	Micro    int
+}
+
+type ServiceInstance struct {
+	Version  Version
+	Location *ServiceLocation
+}
+
+type ServiceVersion struct {
+	v         Version
+	locations []*ServiceLocation
+}
 
 type Service struct {
 	Name     string
-	Versions []ServiceVersion
+	Versions []*ServiceVersion
+}
+
+type ServiceRegistry struct {
+	Services []*Service
+}
+
+type ServiceLocation struct {
+	Location url.URL
+}
+
+func (v1 *Version) Matches(v2 *Version) (bool) {
+	if (v1.Major == v2.Major && v1.Minor == v2.Minor && v1.Micro == v2.Micro) {
+		return true
+	}
+	return false
+}
+
+func (sr *ServiceRegistry) GetServiceWithName(name string) (*Service) {
+	for i, value := range sr.Services {
+		if (value.Name == name) {
+			return sr.Services[i]
+		}
+	}
+
+	// Need to make a new Service
+	s := NewService(name)
+	sr.Services = append(sr.Services, s)
+	return s
 }
 
 func NewService(name string) (*Service) {
@@ -16,38 +59,39 @@ func NewService(name string) (*Service) {
 	return s
 }
 
-func (S *Service) AddServiceVersion(v Version) {
-	//sv := ServiceVersion.New()
-	//S.Versions = append(S.Versions, sv)
-}
-
 func NewVersion(major int, minor int, micro int) (Version) {
 	v := Version{major, minor, micro}
 	return v
 }
 
-func NewLocation(u *url.URL) (ServiceLocation) {
+func NewLocation(u *url.URL) (*ServiceLocation) {
 	sl := ServiceLocation{*u}
-	return sl
+	return &sl
+}
+
+func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
+	for i, value := range s.Versions {
+		if (value.v.Matches(&v)) {
+			return s.Versions[i].locations
+		}
+	}
+	return nil
 }
 
 func (s *Service) getVersion(v Version) (*ServiceVersion) {
 	for i, value := range s.Versions {
-		if (value.v == v) {
-			return &s.Versions[i]
+		if (value.v.Matches(&v)) {
+			return s.Versions[i]
 		}
 	}
+
 	// Need to make a new ServiceVersion
 	sv := ServiceVersion{v, nil}
-	s.Versions = append(s.Versions, sv)
-	return &s.Versions[0]
+	s.Versions = append(s.Versions, &sv)
+	return &sv
 }
 
-func (s *Service) AddServiceInstance(v Version, sl ServiceLocation) {
+func (s *Service) AddServiceInstance(v Version, sl *ServiceLocation) {
 	sv := s.getVersion(v)
 	sv.locations = append(sv.locations, sl)
-	fmt.Printf("There are %d locations for version %d.%d.%d\n", len(sv.locations), v.Major, v.Minor, v.Micro)
-	for _, value := range sv.locations {
-		fmt.Printf(" - %v\n", value.location)
-	}
 }
