@@ -1,3 +1,5 @@
+// This package tracks the data structures for the entire Service Registry, including the contained Services and
+// their locations
 package ServiceRegistry
 
 import (
@@ -7,31 +9,32 @@ import (
 	"strconv"
 )
 
+// Represents a crude version numbering scheme
 type Version struct {
 	Major    int64
 	Minor    int64
 	Micro    int64
 }
 
-type ServiceInstance struct {
-	Version  Version
-	Location *ServiceLocation
-}
-
+// Represents all of the locations where one would find the given version of an API
 type ServiceVersion struct {
 	v         Version
 	locations []*ServiceLocation
 }
 
+// An API, of which there may be many versions, each of which may have many locations across which you want to balance
+// the load
 type Service struct {
 	Name     string
 	Versions []*ServiceVersion
 }
 
+// The top-level object which contains all of the services available
 type ServiceRegistry struct {
 	Services []*Service
 }
 
+// An abstraction of the location of a service; currently only allows a URL to be used
 type ServiceLocation struct {
 	Location url.URL
 }

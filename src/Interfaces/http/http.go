@@ -1,3 +1,4 @@
+// Provides an HTTP interface into the Service Registry
 package http
 
 import (
@@ -7,6 +8,8 @@ import (
 	"strings"
 )
 
+// Returns a handler for /services for the given Service Registry, allowing the URLs beneath /services to refer to the
+// services in that registry
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if pathParts := strings.Split(r.URL.Path, "/"); len(pathParts) > 2 {
@@ -19,6 +22,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	}
 }
 
+// Runs the actual HTTP server, ie spawns the goroutine via http.ListenAndServe
 func RunHTTP(sr *ServiceRegistry.ServiceRegistry) {
 	http.HandleFunc("/services/", getServiceHandler(sr))
 	listenAddr := ":8081"
