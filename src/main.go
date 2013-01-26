@@ -1,12 +1,16 @@
 package main
 
-import "fmt"
-import "ServiceRegistry"
-import "net/url"
+import (
+	"net/url"
+	"ServiceRegistry"
+	"Interfaces/http"
+	"fmt"
+	"math/rand"
+	"time"
+)
 
 func main() {
-	fmt.Println("Hello")
-
+	rand.Seed(time.Now().UnixNano())
 	sr := ServiceRegistry.ServiceRegistry{}
 
 	a := ServiceRegistry.NewService("TestService")
@@ -45,4 +49,10 @@ func main() {
 	// Interrogate the data structures
 	fmt.Println(sr.GetServiceWithName("TestService").GetLocationsForVersion(ServiceRegistry.Version{1, 24, 37})[0].Location)
 
+	// Interrogate the data structures
+	fmt.Println(sr.GetServiceWithName("TestService").GetLocationForVersion(ServiceRegistry.Version{1, 24, 37}))
+
+	http.RunHTTP(&sr)
+
 }
+

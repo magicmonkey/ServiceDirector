@@ -2,12 +2,15 @@ package ServiceRegistry
 
 import (
 	"net/url"
+	"math/rand"
+	"strings"
+	"strconv"
 )
 
 type Version struct {
-	Major    int
-	Minor    int
-	Micro    int
+	Major    int64
+	Minor    int64
+	Micro    int64
 }
 
 type ServiceInstance struct {
@@ -31,6 +34,23 @@ type ServiceRegistry struct {
 
 type ServiceLocation struct {
 	Location url.URL
+}
+
+func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
+	versionParts := strings.Split(vString, ".")
+	vp0, err := strconv.ParseInt(versionParts[0], 10, 8)
+	if err != nil {
+		panic(err)
+	}
+	vp1, err := strconv.ParseInt(versionParts[1], 10, 8)
+	if err != nil {
+		panic(err)
+	}
+	vp2, err := strconv.ParseInt(versionParts[2], 10, 8)
+	if err != nil {
+		panic(err)
+	}
+	return Version{vp0, vp1, vp2}
 }
 
 func (v1 *Version) Matches(v2 *Version) (bool) {
@@ -59,7 +79,7 @@ func NewService(name string) (*Service) {
 	return s
 }
 
-func NewVersion(major int, minor int, micro int) (Version) {
+func NewVersion(major int64, minor int64, micro int64) (Version) {
 	v := Version{major, minor, micro}
 	return v
 }
@@ -76,6 +96,16 @@ func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
 		}
 	}
 	return nil
+}
+
+func (s *Service) GetLocationForVersion(v Version) (*ServiceLocation) {
+	sls := s.GetLocationsForVersion(v)
+	if sls == nil {
+		return nil
+	}
+	// Randomly pick a version
+	vNum := rand.Intn(len(sls))
+	return sls[vNum]
 }
 
 func (s *Service) getVersion(v Version) (*ServiceVersion) {
