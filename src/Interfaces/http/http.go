@@ -13,11 +13,17 @@ import (
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if pathParts := strings.Split(r.URL.Path, "/"); len(pathParts) > 2 {
-			fmt.Fprintf(w, "Service requested: %v\n", pathParts[2])
-			svc := sr.GetServiceWithName(pathParts[2])
+			svc := sr.GetServiceWithName(pathParts[2], false)
+			if svc == nil {
+				http.Error(w, fmt.Sprintf("No service found with name %v\n", pathParts[2]), 400)
+				return
+			}
 			svs := svc.GetLocationForVersion(sr.GetVersionFromString(pathParts[3]))
-			fmt.Fprintf(w, "Versions: %v\n", svc.Versions)
-			fmt.Fprintf(w, "Chosen version: %v\n", svs)
+			if svs == nil {
+				http.Error(w, fmt.Sprintf("Found service with name %v but could not find an instance with version %v\n", pathParts[2], pathParts[3]), 400)
+				return
+			}
+			fmt.Fprintln(w, svs.Location.String())
 		}
 	}
 }

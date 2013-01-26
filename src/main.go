@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
+
+	// Seed the RNG.  This isn't cryptography, it doesn't matter if the RNG is predictable.
 	rand.Seed(time.Now().UnixNano())
+
 	sr := ServiceRegistry.ServiceRegistry{}
 
 	a := ServiceRegistry.NewService("TestService")
@@ -47,10 +50,10 @@ func main() {
 	fmt.Printf(b.Name + ": %d versions\n", len(b.Versions))
 
 	// Interrogate the data structures
-	fmt.Println(sr.GetServiceWithName("TestService").GetLocationsForVersion(ServiceRegistry.Version{1, 24, 37})[0].Location)
+	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationsForVersion(ServiceRegistry.Version{1, 24, 37})[0].Location)
 
 	// Interrogate the data structures
-	fmt.Println(sr.GetServiceWithName("TestService").GetLocationForVersion(ServiceRegistry.Version{1, 24, 37}))
+	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationForVersion(ServiceRegistry.Version{1, 24, 37}))
 
 	http.RunHTTP(&sr)
 

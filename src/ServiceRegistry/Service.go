@@ -41,15 +41,15 @@ type ServiceLocation struct {
 
 func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
 	versionParts := strings.Split(vString, ".")
-	vp0, err := strconv.ParseInt(versionParts[0], 10, 8)
+	vp0, err := strconv.ParseInt(versionParts[0], 10, 16)
 	if err != nil {
 		panic(err)
 	}
-	vp1, err := strconv.ParseInt(versionParts[1], 10, 8)
+	vp1, err := strconv.ParseInt(versionParts[1], 10, 16)
 	if err != nil {
 		panic(err)
 	}
-	vp2, err := strconv.ParseInt(versionParts[2], 10, 8)
+	vp2, err := strconv.ParseInt(versionParts[2], 10, 16)
 	if err != nil {
 		panic(err)
 	}
@@ -63,17 +63,21 @@ func (v1 *Version) Matches(v2 *Version) (bool) {
 	return false
 }
 
-func (sr *ServiceRegistry) GetServiceWithName(name string) (*Service) {
+func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool) (*Service) {
 	for i, value := range sr.Services {
 		if (value.Name == name) {
 			return sr.Services[i]
 		}
 	}
 
-	// Need to make a new Service
-	s := NewService(name)
-	sr.Services = append(sr.Services, s)
-	return s
+	if createIfNotExist {
+		// Need to make a new Service
+		s := NewService(name)
+		sr.Services = append(sr.Services, s)
+		return s
+	}
+
+	return nil
 }
 
 func NewService(name string) (*Service) {
