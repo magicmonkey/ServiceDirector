@@ -7,15 +7,6 @@ import (
 	"math/rand"
 )
 
-// Represents a crude version numbering scheme
-type Version string
-
-// Represents all of the locations where one would find the given version of an API
-type ServiceVersion struct {
-	v         Version
-	locations []*ServiceLocation
-}
-
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
 // the load
 type Service struct {
@@ -31,17 +22,6 @@ type ServiceRegistry struct {
 // An abstraction of the location of a service; currently only allows a URL to be used
 type ServiceLocation struct {
 	Location url.URL
-}
-
-func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
-	return Version(vString)
-}
-
-func (v1 *Version) Matches(v2 *Version) (bool) {
-	if (*v1 == *v2) {
-		return true
-	}
-	return false
 }
 
 func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool) (*Service) {
@@ -65,10 +45,6 @@ func NewService(name string) (*Service) {
 	s := new(Service)
 	s.Name = name
 	return s
-}
-
-func NewVersion(vString string) (Version) {
-	return Version(vString)
 }
 
 func NewLocation(u *url.URL) (*ServiceLocation) {
