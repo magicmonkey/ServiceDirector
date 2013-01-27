@@ -54,7 +54,7 @@ func NewLocation(u *url.URL) (*ServiceLocation) {
 
 func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
 	for i, value := range s.Versions {
-		if (value.v.Matches(&v)) {
+		if (value.v.Matches(&v, false)) {
 			return s.Versions[i].locations
 		}
 	}
@@ -73,7 +73,7 @@ func (s *Service) GetLocationForVersion(v Version) (*ServiceLocation) {
 
 func (s *Service) getVersion(v Version) (*ServiceVersion) {
 	for i, value := range s.Versions {
-		if (value.v.Matches(&v)) {
+		if (value.v.Matches(&v, true)) {
 			return s.Versions[i]
 		}
 	}
