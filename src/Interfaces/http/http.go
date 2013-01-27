@@ -15,12 +15,12 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 		if pathParts := strings.Split(r.URL.Path, "/"); len(pathParts) > 2 {
 			svc := sr.GetServiceWithName(pathParts[2], false)
 			if svc == nil {
-				http.Error(w, fmt.Sprintf("No service found with name %v\n", pathParts[2]), 400)
+				http.Error(w, fmt.Sprintf("No service found with name %v", pathParts[2]), 400)
 				return
 			}
 			svs := svc.GetLocationForVersion(sr.GetVersionFromString(pathParts[3]))
 			if svs == nil {
-				http.Error(w, fmt.Sprintf("Found service with name %v but could not find an instance with version %v\n", pathParts[2], pathParts[3]), 400)
+				http.Error(w, fmt.Sprintf("Found service with name %v but could not find an instance with version %v", pathParts[2], pathParts[3]), 400)
 				return
 			}
 			fmt.Fprintln(w, svs.Location.String())
