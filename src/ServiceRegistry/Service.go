@@ -47,11 +47,11 @@ func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
 	}
 	vp1, err := strconv.ParseInt(versionParts[1], 10, 16)
 	if err != nil {
-		panic(err)
+		vp1 = nil
 	}
 	vp2, err := strconv.ParseInt(versionParts[2], 10, 16)
 	if err != nil {
-		panic(err)
+		vp2 = nil
 	}
 	return Version{vp0, vp1, vp2}
 }
