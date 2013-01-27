@@ -5,16 +5,10 @@ package ServiceRegistry
 import (
 	"net/url"
 	"math/rand"
-	"strings"
-	"strconv"
 )
 
 // Represents a crude version numbering scheme
-type Version struct {
-	Major    int64
-	Minor    int64
-	Micro    int64
-}
+type Version string
 
 // Represents all of the locations where one would find the given version of an API
 type ServiceVersion struct {
@@ -40,24 +34,11 @@ type ServiceLocation struct {
 }
 
 func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
-	versionParts := strings.Split(vString, ".")
-	vp0, err := strconv.ParseInt(versionParts[0], 10, 16)
-	if err != nil {
-		panic(err)
-	}
-	vp1, err := strconv.ParseInt(versionParts[1], 10, 16)
-	if err != nil {
-		vp1 = nil
-	}
-	vp2, err := strconv.ParseInt(versionParts[2], 10, 16)
-	if err != nil {
-		vp2 = nil
-	}
-	return Version{vp0, vp1, vp2}
+	return Version(vString)
 }
 
 func (v1 *Version) Matches(v2 *Version) (bool) {
-	if (v1.Major == v2.Major && v1.Minor == v2.Minor && v1.Micro == v2.Micro) {
+	if (*v1 == *v2) {
 		return true
 	}
 	return false
@@ -86,9 +67,8 @@ func NewService(name string) (*Service) {
 	return s
 }
 
-func NewVersion(major int64, minor int64, micro int64) (Version) {
-	v := Version{major, minor, micro}
-	return v
+func NewVersion(vString string) (Version) {
+	return Version(vString)
 }
 
 func NewLocation(u *url.URL) (*ServiceLocation) {
