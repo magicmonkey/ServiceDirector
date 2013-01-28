@@ -19,6 +19,8 @@ func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
 
 func (v1 *Version) Matches(v2 *Version, strict bool) (bool) {
 
+	// TODO: Sort in order
+
 	// Strict matching is easy; just compare the strings
 	if strict {
 		if (*v1 == *v2) {

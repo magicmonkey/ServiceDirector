@@ -12,6 +12,7 @@ import (
 // services in that registry
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Printf("Got request for %v\n", r.URL.Path)
 		if pathParts := strings.Split(r.URL.Path, "/"); len(pathParts) > 2 {
 			svc := sr.GetServiceWithName(pathParts[2], false)
 			if svc == nil {
@@ -28,7 +29,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	}
 }
 
-// Runs the actual HTTP server, ie spawns the goroutine via http.ListenAndServe
+// Runs the actual HTTP server, ie spawns the go routine via http.ListenAndServe
 func RunHTTP(sr *ServiceRegistry.ServiceRegistry) {
 	http.HandleFunc("/services/", getServiceHandler(sr))
 	listenAddr := ":8081"

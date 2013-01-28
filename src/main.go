@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"ServiceRegistry"
 	"Interfaces/http"
+	"Interfaces/update"
 	"fmt"
 	"math/rand"
 	"time"
@@ -56,6 +57,7 @@ func main() {
 	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationForVersion(ServiceRegistry.Version("1.24.37")))
 
 	http.RunHTTP(&sr)
+	update.RunHTTP(&sr)
 
 }
 
