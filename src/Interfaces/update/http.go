@@ -35,7 +35,3 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	}
 	c<-true
 }
-
-sadcsadcsa
-cas
-dcsadcasd
