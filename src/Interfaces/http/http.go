@@ -29,12 +29,14 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	}
 }
 
-// Runs the actual HTTP server, ie spawns the go routine via http.ListenAndServe
-func RunHTTP(sr *ServiceRegistry.ServiceRegistry) {
-	http.HandleFunc("/services/", getServiceHandler(sr))
+// Runs the actual HTTP server, ie calls http.ListenAndServe
+func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
+	sm := http.NewServeMux()
+	sm.HandleFunc("/services/", getServiceHandler(sr))
 	listenAddr := ":8081"
 	fmt.Printf("Starting HTTP server on %v\n", listenAddr)
-	if e := http.ListenAndServe(listenAddr, nil); e != nil {
+	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}
+	c<-true
 }
