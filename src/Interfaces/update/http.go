@@ -9,7 +9,18 @@ import (
 
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Got update request for %v\n", r.URL.Path)
+		fmt.Printf("Got update (%v) request for %v\n", r.Method, r.URL.Path)
+
+		switch r.Method {
+		case "POST":
+			if r.Header.Get("Content-Type") != "application/json" {
+				http.Error(w, "Server only understands application/json as the content-type", 400)
+				return
+			}
+		case "PUT":
+			fmt.Println("You're creating a resource?")
+		}
+
 	}
 }
 
@@ -24,3 +35,7 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	}
 	c<-true
 }
+
+sadcsadcsa
+cas
+dcsadcasd
