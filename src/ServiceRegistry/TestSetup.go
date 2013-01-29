@@ -2,7 +2,7 @@ package ServiceRegistry
 
 import (
 	"net/url"
-	"fmt"
+	//	"fmt"
 )
 
 func (sr *ServiceRegistry) GenerateTestData() {
@@ -37,14 +37,14 @@ func (sr *ServiceRegistry) GenerateTestData() {
 	u, _ = url.Parse("https://kevin.valinor.local/sfvslfvsf")
 	a.AddServiceInstance(NewVersion("2.24.37"), NewLocation(u))
 
-	fmt.Printf(a.Name + ": %d versions\n", len(a.Versions))
-	fmt.Printf(b.Name + ": %d versions\n", len(b.Versions))
-
-	// Interrogate the data structures
-	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationsForVersion(NewVersion("1.24.37"))[0].Location)
-
-	// Interrogate the data structures
-	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationForVersion(Version("1.24.37")))
+	//	fmt.Printf(a.Name + ": %d versions\n", len(a.Versions))
+	//	fmt.Printf(b.Name + ": %d versions\n", len(b.Versions))
+	//
+	//	// Interrogate the data structures
+	//	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationsForVersion(NewVersion("1.24.37"))[0].Location)
+	//
+	//	// Interrogate the data structures
+	//	fmt.Println(sr.GetServiceWithName("TestService", false).GetLocationForVersion(Version("1.24.37")))
 
 
 }
