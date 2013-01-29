@@ -18,7 +18,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				return
 			}
 		case "PUT":
-			fmt.Println("You're creating a resource?")
+			fmt.Println("You're creating a resource?  This is the right place to PUT to!")
 		}
 
 	}
