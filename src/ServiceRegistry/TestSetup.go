@@ -17,13 +17,13 @@ func (sr *ServiceRegistry) GenerateTestData() {
 	var u *url.URL
 
 	u, _ = url.Parse("http://10.1.0.1:1237/afvdafvdafv")
-	b.AddServiceInstance(NewVersion("1.0.0"), NewLocation(u))
+	a.AddServiceInstance(NewVersion("1.0.0"), NewLocation(u))
 
 	u, _ = url.Parse("http://10.1.0.2:1238/qwefrwq")
-	b.AddServiceInstance(NewVersion("1.0.0"), NewLocation(u))
+	a.AddServiceInstance(NewVersion("1.0.0"), NewLocation(u))
 
 	u, _ = url.Parse("http://10.1.0.3:1239/abdfbadfbadfbadfba")
-	b.AddServiceInstance(NewVersion("1.0.0"), NewLocation(u))
+	a.AddServiceInstance(NewVersion("1.0.0"), NewLocation(u))
 
 	u, _ = url.Parse("http://localhost:123/qwerty")
 	a.AddServiceInstance(NewVersion("1.24.37"), NewLocation(u))
