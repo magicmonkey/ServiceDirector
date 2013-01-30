@@ -9,14 +9,16 @@ func TestPass(t *testing.T) {
 
 func TestCreateNewService(t *testing.T) {
 	sr := ServiceRegistry{}
-	if sr.GetServiceWithName("Test", true) == nil {
-		t.Fail()
+	if _, created := sr.GetServiceWithName("Test", true); created {
+		return
 	}
+	t.Fail()
 }
 
 func TestDoNotCreateNewService(t *testing.T) {
 	sr := ServiceRegistry{}
-	if sr.GetServiceWithName("Test", false) != nil {
-		t.Fail()
+	if _, created := sr.GetServiceWithName("Test", false); !created {
+		return
 	}
+	t.Fail()
 }
