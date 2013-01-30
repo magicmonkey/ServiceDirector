@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"fmt"
 	"strings"
+	"encoding/json"
 )
 
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
@@ -13,11 +14,21 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 		fmt.Printf("Got update (%v) request for %v\n", r.Method, r.URL.Path)
 
 		switch r.Method {
+
 		case "POST":
 			if r.Header.Get("Content-Type") != "application/json" {
 				http.Error(w, "Server only understands application/json as the content-type", 400)
 				return
 			}
+
+			type SubmittedInstance struct {
+				Version  string
+				Location string
+			}
+			req := new(SubmittedInstance)
+			json.NewDecoder(r.Body).Decode(req)
+			fmt.Printf("%v", req)
+
 		case "PUT":
 			pathParts := strings.Split(r.URL.Path, "/")
 			if len(pathParts) != 3 {
