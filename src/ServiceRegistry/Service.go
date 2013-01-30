@@ -24,10 +24,10 @@ type ServiceLocation struct {
 	Location url.URL
 }
 
-func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool) (*Service) {
+func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool) (service *Service, created bool) {
 	for i, value := range sr.Services {
 		if (value.Name == name) {
-			return sr.Services[i]
+			return sr.Services[i], false
 		}
 	}
 
@@ -35,10 +35,10 @@ func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool
 		// Need to make a new Service
 		s := NewService(name)
 		sr.Services = append(sr.Services, s)
-		return s
+		return s, true
 	}
 
-	return nil
+	return nil, false
 }
 
 func NewService(name string) (*Service) {

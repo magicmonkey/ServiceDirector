@@ -5,6 +5,7 @@ import (
 	"ServiceRegistry"
 	"net/http"
 	"fmt"
+	"strings"
 )
 
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
@@ -18,9 +19,22 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				return
 			}
 		case "PUT":
-			fmt.Println("You're creating a resource?")
+			pathParts := strings.Split(r.URL.Path, "/")
+			if len(pathParts) != 3 {
+				http.Error(w, "Should only PUT to /services/<service-name>", 400)
+				return
+			}
+			// Currently don't care about the body, but we may do later
+			svc, created := sr.GetServiceWithName(pathParts[2], true)
+			switch created {
+			case true:
+				w.WriteHeader(201)
+				fmt.Fprintf(w, "Created resource %v", svc.Name)
+			case false:
+				w.WriteHeader(200)
+				fmt.Fprintf(w, "Resource %v already exists", svc.Name)
+			}
 		}
-
 	}
 }
 

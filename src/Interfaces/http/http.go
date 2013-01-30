@@ -14,7 +14,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Got request for %v\n", r.URL.Path)
 		if pathParts := strings.Split(r.URL.Path, "/"); len(pathParts) > 2 {
-			svc := sr.GetServiceWithName(pathParts[2], false)
+			svc, _ := sr.GetServiceWithName(pathParts[2], false)
 			if svc == nil {
 				http.Error(w, fmt.Sprintf("No service found with name %v", pathParts[2]), 400)
 				return
