@@ -64,6 +64,58 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				w.WriteHeader(200)
 				fmt.Fprintf(w, `Resource %v already exists`, svc.Name)
 			}
+
+		case `GET`:
+			pathParts := strings.Split(r.URL.Path, "/")
+
+			switch len(pathParts) {
+
+			case 4:
+				// /services/TestService/1.2.4
+				svc, _ := sr.GetServiceWithName(pathParts[2], false)
+				if svc == nil {
+					http.Error(w, fmt.Sprintf(`No service found with name %v`, pathParts[2]), 400)
+					return
+				}
+				svs := svc.GetLocationsForVersion(sr.GetVersionFromString(pathParts[3]))
+				if svs == nil {
+					http.Error(w, fmt.Sprintf(`Found service with name %v but could not find an instance with version %v`, pathParts[2], pathParts[3]), 400)
+					return
+				}
+
+				// TODO: JSON-ify this output
+				for _, value := range svs {
+					fmt.Fprintln(w, value.Location.String())
+				}
+
+			case 3:
+				// /services/TestService or /services/
+
+				if pathParts[2] == "" {
+					// /services/ : List the services available
+					// TODO: JSON-ify this output
+					for _, value := range sr.Services {
+						fmt.Fprintln(w, value.Name)
+					}
+
+				}
+
+				if pathParts[2] != "" {
+					// /services/TestService : List the versions of the service
+					svc, _ := sr.GetServiceWithName(pathParts[2], false)
+					if svc == nil {
+						http.Error(w, fmt.Sprintf(`No service found with name %v`, pathParts[2]), 400)
+						return
+					}
+
+					// TODO: JSON-ify this output
+					for _, value := range svc.Versions {
+						fmt.Fprintln(w, value.Version)
+					}
+				}
+
+			}
+
 		}
 	}
 }

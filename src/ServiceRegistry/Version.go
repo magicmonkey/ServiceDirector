@@ -9,7 +9,7 @@ type Version string
 
 // Represents all of the locations where one would find the given version of an API
 type ServiceVersion struct {
-	v         Version
+	Version   Version
 	locations []*ServiceLocation
 }
 
