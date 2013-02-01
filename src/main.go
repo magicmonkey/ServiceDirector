@@ -4,6 +4,7 @@ import (
 	"ServiceRegistry"
 	"Interfaces/http"
 	"Interfaces/update"
+	"Interfaces/persistor"
 	"math/rand"
 	"time"
 )
@@ -15,14 +16,17 @@ func main() {
 
 	sr := ServiceRegistry.ServiceRegistry{}
 
+	okToContinue := make(chan bool)
+	p := persistor.Persistor{}
+	go p.Listen(&sr, okToContinue)
+	<-okToContinue
+
 	sr.GenerateTestData()
 
 	c1 := make(chan bool)
 	c2 := make(chan bool)
-
 	go http.RunHTTP(&sr, c1)
 	go update.RunHTTP(&sr, c2)
-
 	<-c1
 	<-c2
 

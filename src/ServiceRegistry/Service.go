@@ -5,6 +5,7 @@ package ServiceRegistry
 import (
 	"net/url"
 	"math/rand"
+	"fmt"
 )
 
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
@@ -12,16 +13,34 @@ import (
 type Service struct {
 	Name     string
 	Versions []*ServiceVersion
+	serviceRegistry *ServiceRegistry
 }
 
 // The top-level object which contains all of the services available
 type ServiceRegistry struct {
-	Services []*Service
+	Services   []*Service
+	notifyChan []chan ServiceUpdate
 }
 
 // An abstraction of the location of a service; currently only allows a URL to be used
 type ServiceLocation struct {
 	Location url.URL
+}
+
+type ServiceUpdate struct {
+	Message string
+}
+
+func (sr *ServiceRegistry) MakeUpdateChannel() (c chan ServiceUpdate) {
+	c = make(chan ServiceUpdate)
+	sr.notifyChan = append(sr.notifyChan, c)
+	return
+}
+
+func (sr *ServiceRegistry) SendUpdate(su ServiceUpdate) {
+	for _, c := range sr.notifyChan {
+		c <- su
+	}
 }
 
 func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool) (service *Service, created bool) {
@@ -33,17 +52,18 @@ func (sr *ServiceRegistry) GetServiceWithName(name string, createIfNotExist bool
 
 	if createIfNotExist {
 		// Need to make a new Service
-		s := NewService(name)
-		sr.Services = append(sr.Services, s)
+		s := sr.NewService(name)
 		return s, true
 	}
 
 	return nil, false
 }
 
-func NewService(name string) (*Service) {
+func (sr *ServiceRegistry) NewService(name string) (*Service) {
 	s := new(Service)
 	s.Name = name
+	s.serviceRegistry = sr
+	sr.Services = append(sr.Services, s)
 	return s
 }
 
@@ -87,4 +107,5 @@ func (s *Service) getVersion(v Version) (*ServiceVersion) {
 func (s *Service) AddServiceInstance(v Version, sl *ServiceLocation) {
 	sv := s.getVersion(v)
 	sv.locations = append(sv.locations, sl)
+	s.serviceRegistry.SendUpdate(ServiceUpdate{fmt.Sprintf("Added service instance %v %v to %v", string(v), sl.Location.String(), s.Name)})
 }

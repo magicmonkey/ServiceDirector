@@ -7,10 +7,8 @@ import (
 
 func (sr *ServiceRegistry) GenerateTestData() {
 
-	a := NewService("TestService")
-	b := NewService("SomeOtherService")
-	sr.Services = append(sr.Services, a)
-	sr.Services = append(sr.Services, b)
+	a := sr.NewService("TestService")
+	b := sr.NewService("SomeOtherService")
 
 	//	Create the data structures
 
@@ -29,7 +27,7 @@ func (sr *ServiceRegistry) GenerateTestData() {
 	a.AddServiceInstance(NewVersion("1.24.37"), NewLocation(u))
 
 	u, _ = url.Parse("https://kevin.valinor.local/blahz")
-	a.AddServiceInstance(NewVersion("1.24.37"), NewLocation(u))
+	b.AddServiceInstance(NewVersion("1.24.37"), NewLocation(u))
 
 	u, _ = url.Parse("https://kevin.valinor.local/blahqwertyz")
 	a.AddServiceInstance(NewVersion("2.24.37"), NewLocation(u))
