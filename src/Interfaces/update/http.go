@@ -83,10 +83,16 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 					return
 				}
 
-				var thingToEncode []string
+				type EncodedServiceInstance struct {
+					Name    string
+					Version string
+					URI     *[]string
+				}
+
+				thingToEncode := EncodedServiceInstance{svc.Name, pathParts[3], new([]string)}
 				enc := json.NewEncoder(w)
 				for _, value := range svs {
-					thingToEncode = append(thingToEncode, value.Location.String())
+					*thingToEncode.URI = append(*thingToEncode.URI, value.Location.String())
 				}
 				enc.Encode(thingToEncode)
 
@@ -96,13 +102,18 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				if pathParts[2] == "" {
 					// /services/ : List the services available
 
-					var thingToEncode []string
+					type EncodedService struct {
+						Name       string
+						URI        string
+					}
+
 					enc := json.NewEncoder(w)
+					var thingToEncode []EncodedService
 					for _, value := range sr.Services {
-						thingToEncode = append(thingToEncode, value.Name)
+						thingToEncode = append(thingToEncode, EncodedService{value.Name, fmt.Sprintf("/services/%v", value.Name)})
 					}
 					enc.Encode(thingToEncode)
-
+					//					enc.Encode(sr.Services)
 				}
 
 				if pathParts[2] != "" {
@@ -113,10 +124,15 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 						return
 					}
 
-					var thingToEncode []string
+					type EncodedService struct {
+						Version       string
+						URI           string
+					}
+
+					var thingToEncode []EncodedService
 					enc := json.NewEncoder(w)
 					for _, value := range svc.Versions {
-						thingToEncode = append(thingToEncode, string(value.Version))
+						thingToEncode = append(thingToEncode, EncodedService{string(value.Version), fmt.Sprintf("/services/%v/%v", svc.Name, value.Version)})
 					}
 					enc.Encode(thingToEncode)
 
