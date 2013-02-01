@@ -83,20 +83,25 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 					return
 				}
 
-				// TODO: JSON-ify this output
+				var thingToEncode []string
+				enc := json.NewEncoder(w)
 				for _, value := range svs {
-					fmt.Fprintln(w, value.Location.String())
+					thingToEncode = append(thingToEncode, value.Location.String())
 				}
+				enc.Encode(thingToEncode)
 
 			case 3:
 				// /services/TestService or /services/
 
 				if pathParts[2] == "" {
 					// /services/ : List the services available
-					// TODO: JSON-ify this output
+
+					var thingToEncode []string
+					enc := json.NewEncoder(w)
 					for _, value := range sr.Services {
-						fmt.Fprintln(w, value.Name)
+						thingToEncode = append(thingToEncode, value.Name)
 					}
+					enc.Encode(thingToEncode)
 
 				}
 
@@ -108,10 +113,13 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 						return
 					}
 
-					// TODO: JSON-ify this output
+					var thingToEncode []string
+					enc := json.NewEncoder(w)
 					for _, value := range svc.Versions {
-						fmt.Fprintln(w, value.Version)
+						thingToEncode = append(thingToEncode, string(value.Version))
 					}
+					enc.Encode(thingToEncode)
+
 				}
 
 			}
