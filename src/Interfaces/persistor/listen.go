@@ -11,14 +11,13 @@ import (
 )
 
 type Persistor struct {
-	serviceRegistryUpdateChannel *chan ServiceRegistry.ServiceRegistryUpdate
-	serviceUpdateChannel *chan ServiceRegistry.ServiceUpdate
+	serviceRegistryUpdateChannel *chan *ServiceRegistry.ServiceRegistry
 	redis *redis.Client
 	connected bool
 }
 
-func NewPersistor(sruc *chan ServiceRegistry.ServiceRegistryUpdate, suc *chan ServiceRegistry.ServiceUpdate) (*Persistor) {
-	p := Persistor{sruc, suc, nil, false}
+func NewPersistor(sruc *chan *ServiceRegistry.ServiceRegistry) (*Persistor) {
+	p := Persistor{sruc, nil, false}
 	return &p
 }
 
@@ -38,27 +37,10 @@ func (p *Persistor) getRedis() (*redis.Client) {
 func (p *Persistor) Listen() {
 	fmt.Println("Persistor: Listening for updates...")
 	for {
-		select {
-		case msg1 := <-*p.serviceUpdateChannel:
-			p.saveService(msg1.Service)
-		case msg2 := <-*p.serviceRegistryUpdateChannel:
-			p.saveServiceRegistry(msg2.ServiceRegistry)
-
-		}
+		msg1 := <-*p.serviceRegistryUpdateChannel
+		p.saveServiceRegistry(msg1)
 	}
 
-}
-
-func (p *Persistor) saveService(s *ServiceRegistry.Service) {
-
-	fmt.Println("Saving a service")
-
-	c := p.getRedis()
-	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
-	enc.Encode(s)
-	err := c.Set(fmt.Sprintf("service-%v", s.Name), buf.String())
-	fmt.Println(err.Val())
 }
 
 func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
@@ -70,4 +52,14 @@ func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
 	enc.Encode(sr)
 	err := c.Set(fmt.Sprintf("serviceregistry-%v", sr.Name), buf.String())
 	fmt.Println(err.Val())
+}
+
+func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {
+	c := p.getRedis()
+	srBytes := c.Get(fmt.Sprintf("serviceregistry-%v", name))
+	buf := bytes.NewBuffer([]byte(srBytes.Val()))
+	dec := gob.NewDecoder(buf)
+	sr := new(ServiceRegistry.ServiceRegistry)
+	dec.Decode(&sr)
+	return sr
 }
