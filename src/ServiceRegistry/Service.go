@@ -5,7 +5,7 @@ package ServiceRegistry
 import (
 	"net/url"
 	"math/rand"
-	"fmt"
+//	"fmt"
 )
 
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
@@ -19,7 +19,9 @@ type Service struct {
 // The top-level object which contains all of the services available
 type ServiceRegistry struct {
 	Services   []*Service
-	notifyChan []chan ServiceUpdate
+	Name string
+	serviceUpdateChan []chan ServiceUpdate
+	serviceRegistryUpdateChan []chan ServiceRegistryUpdate
 }
 
 // An abstraction of the location of a service; currently only allows a URL to be used
@@ -28,18 +30,32 @@ type ServiceLocation struct {
 }
 
 type ServiceUpdate struct {
-	Message string
+	Service *Service
+	Action string
 }
 
-func (sr *ServiceRegistry) MakeUpdateChannel() (c chan ServiceUpdate) {
-	c = make(chan ServiceUpdate)
-	sr.notifyChan = append(sr.notifyChan, c)
-	return
+type ServiceRegistryUpdate struct {
+	ServiceRegistry *ServiceRegistry
+	Action string
 }
+
+func (sr *ServiceRegistry) MakeServiceUpdateChannel() (c1 chan ServiceUpdate) {
+	c1 = make(chan ServiceUpdate)
+	sr.serviceUpdateChan = append(sr.serviceUpdateChan, c1)
+	return c1
+}
+
+// TODO: Combine these updates using an interface
 
 func (sr *ServiceRegistry) SendUpdate(su ServiceUpdate) {
-	for _, c := range sr.notifyChan {
+	for _, c := range sr.serviceUpdateChan {
 		c <- su
+	}
+}
+
+func (sr *ServiceRegistry) SendRegistryUpdate(sru ServiceRegistryUpdate) {
+	for _, c := range sr.serviceRegistryUpdateChan {
+		c <- sru
 	}
 }
 
@@ -64,7 +80,17 @@ func (sr *ServiceRegistry) NewService(name string) (*Service) {
 	s.Name = name
 	s.serviceRegistry = sr
 	sr.Services = append(sr.Services, s)
+	sr.SendUpdate(ServiceUpdate{s, "Added service"})
 	return s
+}
+
+func NewServiceRegistry(name string, sru *chan ServiceRegistryUpdate, su *chan ServiceUpdate) (*ServiceRegistry) {
+	sr := ServiceRegistry{}
+	sr.Name = name
+	sr.serviceUpdateChan = append(sr.serviceUpdateChan, *su)
+	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, *sru)
+	sr.SendRegistryUpdate(ServiceRegistryUpdate{&sr, "Added service registry"})
+	return &sr
 }
 
 func NewLocation(u *url.URL) (*ServiceLocation) {
@@ -107,5 +133,5 @@ func (s *Service) getVersion(v Version) (*ServiceVersion) {
 func (s *Service) AddServiceInstance(v Version, sl *ServiceLocation) {
 	sv := s.getVersion(v)
 	sv.locations = append(sv.locations, sl)
-	s.serviceRegistry.SendUpdate(ServiceUpdate{fmt.Sprintf("Added service instance %v %v to %v", string(v), sl.Location.String(), s.Name)})
+	s.serviceRegistry.SendUpdate(ServiceUpdate{s, "Added instance"})
 }
