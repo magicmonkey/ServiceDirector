@@ -4,7 +4,7 @@ package ServiceRegistry
 
 import (
 	"math/rand"
-	"fmt"
+//	"fmt"
 )
 
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
@@ -87,7 +87,6 @@ func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
 func (s *Service) GetLocationForVersion(v Version) (*ServiceLocation) {
 	sls := s.GetLocationsForVersion(v)
 
-	fmt.Println(sls)
 	if sls == nil {
 		return nil
 	}
