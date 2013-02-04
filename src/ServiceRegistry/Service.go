@@ -27,7 +27,7 @@ type ServiceLocation struct {
 	Location string
 }
 
-func NewServiceRegistry(name string, sru *chan *ServiceRegistry) (*ServiceRegistry) {
+func NewServiceRegistry(name string, sru chan *ServiceRegistry) (*ServiceRegistry) {
 	sr := ServiceRegistry{}
 	sr.Name = name
 	sr.RegisterUpdateChannel(sru)
@@ -71,8 +71,8 @@ func (sr *ServiceRegistry) NewService(name string) (*Service) {
 	return s
 }
 
-func (sr *ServiceRegistry) RegisterUpdateChannel(sru *chan *ServiceRegistry) {
-	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, *sru)
+func (sr *ServiceRegistry) RegisterUpdateChannel(sru chan *ServiceRegistry) {
+	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, sru)
 }
 
 func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
@@ -113,6 +113,8 @@ func (s *Service) AddServiceInstance(v Version, sl *ServiceLocation) {
 	sv := s.getVersion(v)
 	sv.Locations = append(sv.Locations, sl)
 	s.serviceRegistry.SendRegistryUpdate()
-	fmt.Println(s.serviceRegistry.Services)
 }
 
+func (s *Service) SetServiceRegistry(sr *ServiceRegistry) {
+	s.serviceRegistry = sr
+}

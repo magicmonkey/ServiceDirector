@@ -53,12 +53,11 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				return
 			}
 			// Currently don't care about the body, but we may do later
-			svc, created := sr.GetServiceWithName(pathParts[2], true)
-			switch created {
-			case true:
+
+			if svc, created := sr.GetServiceWithName(pathParts[2], true); created {
 				w.WriteHeader(201)
 				fmt.Fprintf(w, `Created resource %v`, svc.Name)
-			case false:
+			} else {
 				w.WriteHeader(200)
 				fmt.Fprintf(w, `Resource %v already exists`, svc.Name)
 			}
@@ -151,5 +150,6 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}
+	fmt.Println("HTTP update: *** FINISHED ***")
 	c<-true
 }

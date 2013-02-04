@@ -16,12 +16,12 @@ func main() {
 
 	sru := make(chan *ServiceRegistry.ServiceRegistry)
 
-	p := persistor.NewPersistor(&sru)
+	p := persistor.NewPersistor(sru)
 	go p.Listen()
 
-	sr := p.LoadServiceRegistry("FirstRegistry", &sru)
+//	sr := p.LoadServiceRegistry("FirstRegistry", &sru)
 
-//	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", &sru)
+	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", sru)
 //	sr.GenerateTestData()
 
 	c1 := make(chan bool)
