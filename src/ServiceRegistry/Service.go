@@ -84,6 +84,10 @@ func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
 	return nil
 }
 
+func (s *Service) GetLocationsForVersionString(v string) ([]*ServiceLocation) {
+	return s.GetLocationsForVersion(s.serviceRegistry.getVersionFromString(v))
+}
+
 func (s *Service) GetLocationForVersion(v Version) (*ServiceLocation) {
 	sls := s.GetLocationsForVersion(v)
 
@@ -93,6 +97,10 @@ func (s *Service) GetLocationForVersion(v Version) (*ServiceLocation) {
 	// Randomly pick a version
 	vNum := rand.Intn(len(sls))
 	return sls[vNum]
+}
+
+func (s *Service) GetLocationForVersionString(v string) (*ServiceLocation) {
+	return s.GetLocationForVersion(s.serviceRegistry.getVersionFromString(v))
 }
 
 func (s *Service) getVersion(v Version) (*ServiceVersion) {

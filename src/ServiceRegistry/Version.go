@@ -13,7 +13,8 @@ type ServiceVersion struct {
 	Locations []*ServiceLocation
 }
 
-func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {
+// Turns a string version (eg "1.0.0") into the internal representation of a version, for use with other functions
+func (sr *ServiceRegistry) getVersionFromString(vString string) (Version) {
 	return Version(vString)
 }
 
