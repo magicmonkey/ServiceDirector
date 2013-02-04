@@ -26,7 +26,7 @@ func (p *Persistor) getRedis() (*redis.Client) {
 	m := sync.Mutex{}
 	m.Lock()
 	if !p.connected {
-		fmt.Println("Opening Redis...")
+		fmt.Println("Persistor: Opening Redis...")
 		p.redis = redis.NewTCPClient("localhost:6379", "", 0)
 		p.connected = true
 	}
@@ -44,22 +44,45 @@ func (p *Persistor) Listen() {
 }
 
 func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
-	fmt.Println("Saving a service registry")
 
+	for _, value := range sr.Services {
+		fmt.Printf("s")
+		for _, value2 := range value.Versions {
+			fmt.Printf("v")
+			for _,_ = range value2.Locations {
+				fmt.Printf("l")
+			}
+			//fmt.Println(i, j, value2.Locations)
+		}
+	}
+	fmt.Println("")
+
+	fmt.Println("Persistor: Saving a service registry")
 	c := p.getRedis()
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	enc.Encode(sr)
-	err := c.Set(fmt.Sprintf("serviceregistry-%v", sr.Name), buf.String())
-	fmt.Println(err.Val())
+	c.Set(fmt.Sprintf("serviceregistry-%v", sr.Name), buf.String())
+//	fmt.Println(err.Val())
 }
 
-func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) LoadServiceRegistry(name string, sru *chan *ServiceRegistry.ServiceRegistry) (*ServiceRegistry.ServiceRegistry) {
+	fmt.Println("Persistor: Loading a service registry called", name)
 	c := p.getRedis()
 	srBytes := c.Get(fmt.Sprintf("serviceregistry-%v", name))
 	buf := bytes.NewBuffer([]byte(srBytes.Val()))
 	dec := gob.NewDecoder(buf)
 	sr := new(ServiceRegistry.ServiceRegistry)
 	dec.Decode(&sr)
+	sr.RegisterUpdateChannel(sru)
+
+	for i, value := range sr.Services {
+		for j, value2 := range value.Versions {
+			fmt.Println(i, j, value2)
+		}
+	}
+
 	return sr
 }
+
+

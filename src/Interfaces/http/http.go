@@ -12,7 +12,7 @@ import (
 // services in that registry
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Got request for %v\n", r.URL.Path)
+		fmt.Printf("HTTP: Got request for %v\n", r.URL.Path)
 
 		pathParts := strings.Split(r.URL.Path, "/")
 
@@ -29,7 +29,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				http.Error(w, fmt.Sprintf(`Found service with name %v but could not find an instance with version %v`, pathParts[2], pathParts[3]), 400)
 				return
 			}
-			fmt.Fprintln(w, svs.Location.String())
+			fmt.Fprintln(w, svs.Location)
 			return
 		}
 
@@ -44,7 +44,7 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc("/services/", getServiceHandler(sr))
 	listenAddr := ":8081"
-	fmt.Printf("Starting HTTP server on %v\n", listenAddr)
+	fmt.Printf("HTTP: Starting HTTP server on %v\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}

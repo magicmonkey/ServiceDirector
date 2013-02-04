@@ -4,7 +4,6 @@ package update
 import (
 	`ServiceRegistry`
 	`net/http`
-	`net/url`
 	`fmt`
 	`strings`
 	`encoding/json`
@@ -12,7 +11,7 @@ import (
 
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Update interface: Got %v request for %v\n", r.Method, r.URL.Path)
+		fmt.Printf("HTTP update: Got %v request for %v\n", r.Method, r.URL.Path)
 
 		switch r.Method {
 
@@ -43,8 +42,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 
 			req := new(SubmittedInstance)
 			json.NewDecoder(r.Body).Decode(req)
-			u, _ := url.Parse(req.Location)
-			svc.AddServiceInstance(ServiceRegistry.NewVersion(req.Version), ServiceRegistry.NewLocation(u))
+			svc.AddServiceInstance(ServiceRegistry.NewVersion(req.Version), ServiceRegistry.NewLocation(req.Location))
 			w.WriteHeader(201)
 			fmt.Fprintf(w, "Added location %v to service %v version %v\n", req.Location, svc.Name, req.Version)
 
@@ -92,7 +90,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 				thingToEncode := EncodedServiceInstance{svc.Name, pathParts[3], new([]string)}
 				enc := json.NewEncoder(w)
 				for _, value := range svs {
-					*thingToEncode.URI = append(*thingToEncode.URI, value.Location.String())
+					*thingToEncode.URI = append(*thingToEncode.URI, value.Location)
 				}
 				enc.Encode(thingToEncode)
 
@@ -149,7 +147,7 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc(`/services/`, getServiceHandler(sr))
 	listenAddr := `:8082`
-	fmt.Printf("Starting HTTP server for updates on %v\n", listenAddr)
+	fmt.Printf("HTTP update: Starting HTTP server for updates on %v\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}

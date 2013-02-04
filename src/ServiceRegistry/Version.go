@@ -10,7 +10,7 @@ type Version string
 // Represents all of the locations where one would find the given version of an API
 type ServiceVersion struct {
 	Version   Version
-	locations []*ServiceLocation
+	Locations []*ServiceLocation
 }
 
 func (sr *ServiceRegistry) GetVersionFromString(vString string) (Version) {

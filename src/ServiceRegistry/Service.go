@@ -3,9 +3,8 @@
 package ServiceRegistry
 
 import (
-	"net/url"
 	"math/rand"
-//	"fmt"
+	"fmt"
 )
 
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
@@ -25,7 +24,20 @@ type ServiceRegistry struct {
 
 // An abstraction of the location of a service; currently only allows a URL to be used
 type ServiceLocation struct {
-	Location url.URL
+	Location string
+}
+
+func NewServiceRegistry(name string, sru *chan *ServiceRegistry) (*ServiceRegistry) {
+	sr := ServiceRegistry{}
+	sr.Name = name
+	sr.RegisterUpdateChannel(sru)
+	sr.SendRegistryUpdate()
+	return &sr
+}
+
+func NewLocation(u string) (*ServiceLocation) {
+	sl := ServiceLocation{u}
+	return &sl
 }
 
 func (sr *ServiceRegistry) SendRegistryUpdate() {
@@ -59,23 +71,14 @@ func (sr *ServiceRegistry) NewService(name string) (*Service) {
 	return s
 }
 
-func NewServiceRegistry(name string, sru *chan *ServiceRegistry) (*ServiceRegistry) {
-	sr := ServiceRegistry{}
-	sr.Name = name
+func (sr *ServiceRegistry) RegisterUpdateChannel(sru *chan *ServiceRegistry) {
 	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, *sru)
-	sr.SendRegistryUpdate()
-	return &sr
-}
-
-func NewLocation(u *url.URL) (*ServiceLocation) {
-	sl := ServiceLocation{*u}
-	return &sl
 }
 
 func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
 	for i, value := range s.Versions {
 		if (value.Version.Matches(&v, false)) {
-			return s.Versions[i].locations
+			return s.Versions[i].Locations
 		}
 	}
 	return nil
@@ -83,6 +86,8 @@ func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
 
 func (s *Service) GetLocationForVersion(v Version) (*ServiceLocation) {
 	sls := s.GetLocationsForVersion(v)
+
+	fmt.Println(sls)
 	if sls == nil {
 		return nil
 	}
@@ -106,6 +111,8 @@ func (s *Service) getVersion(v Version) (*ServiceVersion) {
 
 func (s *Service) AddServiceInstance(v Version, sl *ServiceLocation) {
 	sv := s.getVersion(v)
-	sv.locations = append(sv.locations, sl)
+	sv.Locations = append(sv.Locations, sl)
 	s.serviceRegistry.SendRegistryUpdate()
+	fmt.Println(s.serviceRegistry.Services)
 }
+
