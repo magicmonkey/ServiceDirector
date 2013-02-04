@@ -16,8 +16,14 @@ func main() {
 
 	sru := make(chan *ServiceRegistry.ServiceRegistry)
 
+	// TODO: Make it so that only a master does saving
+
+	// The Persistor is the thing which saves any updates to Redis
 	p := persistor.NewPersistor(sru)
 	go p.Listen()
+
+	// The Master is the thing which allows slaves to connect and get updates
+
 
 	sr := p.LoadServiceRegistry("FirstRegistry", sru)
 
