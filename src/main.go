@@ -5,6 +5,7 @@ import (
 	"Interfaces/http"
 	"Interfaces/update"
 	"Interfaces/persistor"
+	"Interfaces/replication"
 	"math/rand"
 	"time"
 )
@@ -15,6 +16,8 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	sru := make(chan *ServiceRegistry.ServiceRegistry)
+
+	replication.StartListener()
 
 	// TODO: Make it so that only a master does saving
 
