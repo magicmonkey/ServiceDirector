@@ -8,27 +8,38 @@ import (
 	"Interfaces/replication"
 	"math/rand"
 	"time"
+	"flag"
+	"log"
 )
 
 func main() {
 
+	var sr *ServiceRegistry.ServiceRegistry
+
 	// Seed the RNG.  This isn't cryptography, it doesn't matter if the RNG is predictable.
 	rand.Seed(time.Now().UnixNano())
 
-	// The Persistor is the thing which saves any updates to Redis
-	sru2 := make(chan *ServiceRegistry.ServiceRegistry)
-	p := persistor.NewPersistor()
-	go p.Listen(sru2)
+	role := flag.String("role", "master", "master or slave")
+	flag.Parse()
 
-	// The Master is the thing which allows slaves to connect and get updates
-	sr := p.LoadServiceRegistry("FirstRegistry")
+	log.Println("[Main] Role is", *role)
 
-	// TODO: Make it so that only a master does saving
-	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
-	go replication.StartListener(sru1)
+	if (*role == "master") {
 
-	sr.RegisterUpdateChannel(sru2)
-	sr.RegisterUpdateChannel(sru1)
+		// The Persistor is the thing which saves any updates to Redis
+		sru2 := make(chan *ServiceRegistry.ServiceRegistry)
+		p := persistor.NewPersistor()
+		go p.Listen(sru2)
+
+		// The Master is the thing which allows slaves to connect and get updates
+		sr = p.LoadServiceRegistry("FirstRegistry")
+
+		sru1 := make(chan *ServiceRegistry.ServiceRegistry)
+		go replication.StartListener(sru1)
+		sr.RegisterUpdateChannel(sru2)
+		sr.RegisterUpdateChannel(sru1)
+
+	}
 
 	//	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", sru)
 	//	sr.GenerateTestData()
