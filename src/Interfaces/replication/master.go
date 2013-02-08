@@ -3,21 +3,25 @@ package replication
 import (
 	"net"
 	"log"
-//	"bytes"
+	"bytes"
 	"fmt"
 	"io"
+	"ServiceRegistry"
+	"encoding/gob"
 )
 
 type listener struct {
 	connections []net.Conn
 }
 
-func StartListener() {
+// Starts the replication listener, and sends any channel updates down the network connection
+func StartListener(sruc chan *ServiceRegistry.ServiceRegistry) {
 	l := new(listener)
 	ln, err := net.Listen("tcp", ":8083")
 	if err != nil {
 		panic(err)
 	}
+	go l.listenForUpdates(sruc)
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -30,13 +34,28 @@ func StartListener() {
 
 }
 
+func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) {
+	var buf bytes.Buffer
+	log.Println("Replication master: Listening for updates...")
+	for {
+		msg1 := <-sruc
+		log.Println("Replication master: Got an update")
+		enc := gob.NewEncoder(&buf)
+		enc.Encode(msg1)
+		l.Write(buf.String())
+	}
+}
+
 func (l *listener) handleConnection(conn net.Conn) {
 	log.Println("Got a connection")
 	l.connections = append(l.connections, conn)
 }
 
-func (l *listener) Write (s string) {
+// Writes a message to each connected client
+func (l *listener) Write(s string) {
+
 	for _, value := range l.connections {
+		log.Println("Replication master: sending update to", value.RemoteAddr())
 		value.Write([]byte(s))
 	}
 }
@@ -53,7 +72,7 @@ func (l *listener) readFromConnection(conn net.Conn) {
 			}
 			break
 		}
-		fmt.Println(string(tbuf[0:n]))
+		fmt.Printf(string(tbuf[0:n]))
 	}
 	l.removeConnection(conn)
 }
@@ -62,8 +81,9 @@ func (l *listener) removeConnection(conn net.Conn) {
 	log.Println("Connection was closed")
 }
 
+// Closes all connected clients
 func (l *listener) Close() {
-	for _,value := range l.connections {
+	for _, value := range l.connections {
 		value.Close()
 	}
 }

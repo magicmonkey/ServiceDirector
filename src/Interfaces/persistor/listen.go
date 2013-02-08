@@ -11,13 +11,12 @@ import (
 )
 
 type Persistor struct {
-	serviceRegistryUpdateChannel chan *ServiceRegistry.ServiceRegistry
 	redis *redis.Client
 	connected bool
 }
 
-func NewPersistor(sruc chan *ServiceRegistry.ServiceRegistry) (*Persistor) {
-	p := Persistor{sruc, nil, false}
+func NewPersistor() (*Persistor) {
+	p := Persistor{nil, false}
 	return &p
 }
 
@@ -34,10 +33,10 @@ func (p *Persistor) getRedis() (*redis.Client) {
 	return p.redis
 }
 
-func (p *Persistor) Listen() {
+func (p *Persistor) Listen(sruc chan *ServiceRegistry.ServiceRegistry) {
 	fmt.Println("Persistor: Listening for updates...")
 	for {
-		msg1 := <-p.serviceRegistryUpdateChannel
+		msg1 := <-sruc
 		fmt.Println("Persistor: Got an update")
 		p.saveServiceRegistry(msg1)
 	}
@@ -52,7 +51,7 @@ func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
 	c.Set(fmt.Sprintf("serviceregistry-%v", sr.Name), buf.String())
 }
 
-func (p *Persistor) LoadServiceRegistry(name string, sru chan *ServiceRegistry.ServiceRegistry) (*ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {
 	fmt.Println("Persistor: Loading a service registry called", name)
 	c := p.getRedis()
 	srBytes := c.Get(fmt.Sprintf("serviceregistry-%v", name))
@@ -60,7 +59,6 @@ func (p *Persistor) LoadServiceRegistry(name string, sru chan *ServiceRegistry.S
 	dec := gob.NewDecoder(buf)
 	sr := new(ServiceRegistry.ServiceRegistry)
 	dec.Decode(&sr)
-	sr.RegisterUpdateChannel(sru)
 
 	// Reconnect the up-tree references
 	for _, value := range sr.Services {

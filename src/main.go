@@ -15,23 +15,23 @@ func main() {
 	// Seed the RNG.  This isn't cryptography, it doesn't matter if the RNG is predictable.
 	rand.Seed(time.Now().UnixNano())
 
-	sru := make(chan *ServiceRegistry.ServiceRegistry)
-
-	replication.StartListener()
-
-	// TODO: Make it so that only a master does saving
-
 	// The Persistor is the thing which saves any updates to Redis
-	p := persistor.NewPersistor(sru)
-	go p.Listen()
+	sru2 := make(chan *ServiceRegistry.ServiceRegistry)
+	p := persistor.NewPersistor()
+	go p.Listen(sru2)
 
 	// The Master is the thing which allows slaves to connect and get updates
+	sr := p.LoadServiceRegistry("FirstRegistry")
 
+	// TODO: Make it so that only a master does saving
+	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
+	go replication.StartListener(sru1)
 
-	sr := p.LoadServiceRegistry("FirstRegistry", sru)
+	sr.RegisterUpdateChannel(sru2)
+	sr.RegisterUpdateChannel(sru1)
 
-//	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", sru)
-//	sr.GenerateTestData()
+	//	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", sru)
+	//	sr.GenerateTestData()
 
 	c1 := make(chan bool)
 	c2 := make(chan bool)
