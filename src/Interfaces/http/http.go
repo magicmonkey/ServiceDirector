@@ -3,6 +3,7 @@ package http
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"ServiceRegistry"
 	"strings"
@@ -12,7 +13,7 @@ import (
 // services in that registry
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("HTTP: Got request for %v\n", r.URL.Path)
+		log.Printf("HTTP: Got request for %v\n", r.URL.Path)
 
 		pathParts := strings.Split(r.URL.Path, "/")
 
@@ -44,7 +45,7 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc("/services/", getServiceHandler(sr))
 	listenAddr := ":8081"
-	fmt.Printf("HTTP: Starting HTTP server on %v\n", listenAddr)
+	log.Printf("[HTTP] Starting HTTP server on %v\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}

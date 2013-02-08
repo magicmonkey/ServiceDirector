@@ -7,6 +7,7 @@ import (
 	"sync"
 	"encoding/gob"
 	"bytes"
+	"log"
 	//	"os"
 )
 
@@ -25,7 +26,7 @@ func (p *Persistor) getRedis() (*redis.Client) {
 	m := sync.Mutex{}
 	m.Lock()
 	if !p.connected {
-		fmt.Println("Persistor: Opening Redis...")
+		log.Println("[Persistor] Opening Redis...")
 		p.redis = redis.NewTCPClient("localhost:6379", "", 0)
 		p.connected = true
 	}
@@ -34,10 +35,10 @@ func (p *Persistor) getRedis() (*redis.Client) {
 }
 
 func (p *Persistor) Listen(sruc chan *ServiceRegistry.ServiceRegistry) {
-	fmt.Println("Persistor: Listening for updates...")
+	log.Println("[Persistor] Listening for updates...")
 	for {
 		msg1 := <-sruc
-		fmt.Println("Persistor: Got an update")
+		log.Println("[Persistor] Got an update")
 		p.saveServiceRegistry(msg1)
 	}
 
@@ -52,7 +53,7 @@ func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
 }
 
 func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {
-	fmt.Println("Persistor: Loading a service registry called", name)
+	log.Println("[Persistor] Loading a service registry called", name)
 	c := p.getRedis()
 	srBytes := c.Get(fmt.Sprintf("serviceregistry-%v", name))
 	buf := bytes.NewBuffer([]byte(srBytes.Val()))

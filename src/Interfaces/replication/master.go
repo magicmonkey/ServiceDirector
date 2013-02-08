@@ -36,10 +36,10 @@ func StartListener(sruc chan *ServiceRegistry.ServiceRegistry) {
 
 func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) {
 	var buf bytes.Buffer
-	log.Println("Replication master: Listening for updates...")
+	log.Println("[Replication master] Listening for updates...")
 	for {
 		msg1 := <-sruc
-		log.Println("Replication master: Got an update")
+		log.Println("[Replication master] Got an update")
 		enc := gob.NewEncoder(&buf)
 		enc.Encode(msg1)
 		l.Write(buf.String())
@@ -55,7 +55,7 @@ func (l *listener) handleConnection(conn net.Conn) {
 func (l *listener) Write(s string) {
 
 	for _, value := range l.connections {
-		log.Println("Replication master: sending update to", value.RemoteAddr())
+		log.Println("[Replication master] Replication master: sending update to", value.RemoteAddr())
 		value.Write([]byte(s))
 	}
 }
@@ -68,7 +68,7 @@ func (l *listener) readFromConnection(conn net.Conn) {
 		// Was there an error in reading ?
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("Read error: %s", err)
+				log.Printf("[Replication master] Read error: %s", err)
 			}
 			break
 		}
@@ -78,7 +78,7 @@ func (l *listener) readFromConnection(conn net.Conn) {
 }
 
 func (l *listener) removeConnection(conn net.Conn) {
-	log.Println("Connection was closed")
+	log.Println("[Replication master] Connection was closed")
 }
 
 // Closes all connected clients

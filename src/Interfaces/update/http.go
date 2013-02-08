@@ -7,11 +7,12 @@ import (
 	`fmt`
 	`strings`
 	`encoding/json`
+	`log`
 )
 
 func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("HTTP update: Got %v request for %v\n", r.Method, r.URL.Path)
+		log.Printf("[HTTP update] Got %v request for %v\n", r.Method, r.URL.Path)
 
 		switch r.Method {
 
@@ -146,10 +147,10 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc(`/services/`, getServiceHandler(sr))
 	listenAddr := `:8082`
-	fmt.Printf("HTTP update: Starting HTTP server for updates on %v\n", listenAddr)
+	log.Printf("[HTTP update] Starting HTTP server for updates on %v\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}
-	fmt.Println("HTTP update: *** FINISHED ***")
+	log.Println("[HTTP update] *** FINISHED ***")
 	c<-true
 }
