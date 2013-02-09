@@ -60,6 +60,7 @@ func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRe
 	dec := gob.NewDecoder(buf)
 	sr := new(ServiceRegistry.ServiceRegistry)
 	dec.Decode(&sr)
+	sr.Name = name
 
 	// Reconnect the up-tree references
 	for _, value := range sr.Services {

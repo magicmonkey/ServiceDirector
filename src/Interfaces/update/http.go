@@ -57,7 +57,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 
 			if svc, created := sr.GetServiceWithName(pathParts[2], true); created {
 				w.WriteHeader(201)
-				fmt.Fprintf(w, `Created resource %v`, svc.Name)
+				fmt.Fprintf(w, "Created resource %v\n", svc.Name)
 			} else {
 				w.WriteHeader(200)
 				fmt.Fprintf(w, `Resource %v already exists`, svc.Name)
@@ -143,10 +143,9 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 }
 
 // Runs the actual HTTP server, ie spawns the goroutine via http.ListenAndServe
-func RunHTTP(sr *ServiceRegistry.ServiceRegistry, c chan bool) {
+func RunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, c chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc(`/services/`, getServiceHandler(sr))
-	listenAddr := `:8082`
 	log.Printf("[HTTP update] Starting HTTP server for updates on %v\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
