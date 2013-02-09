@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"ServiceRegistry"
-	"encoding/gob"
+	"encoding/json"
 )
 
 type listener struct {
@@ -41,7 +41,7 @@ func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) 
 	for {
 		msg1 := <-sruc
 		log.Println("[Replication master] Got an update")
-		enc := gob.NewEncoder(&buf)
+		enc := json.NewEncoder(&buf)
 		enc.Encode(msg1)
 		l.Write(buf.String())
 		buf.Reset()
@@ -54,7 +54,7 @@ func (l *listener) handleConnection(conn net.Conn, sr *ServiceRegistry.ServiceRe
 
 	// Send initial structure down the wire
 	var buf bytes.Buffer
-	enc := gob.NewEncoder(&buf)
+	enc := json.NewEncoder(&buf)
 	enc.Encode(sr)
 	conn.Write(buf.Bytes())
 	buf.Reset()

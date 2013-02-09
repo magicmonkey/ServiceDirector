@@ -5,7 +5,7 @@ import (
 	"net"
 	"fmt"
 	"log"
-	"encoding/gob"
+	"encoding/json"
 )
 
 func StartSlave(masterAddr string, sru1 chan *ServiceRegistry.ServiceRegistry) {
@@ -16,7 +16,7 @@ func StartSlave(masterAddr string, sru1 chan *ServiceRegistry.ServiceRegistry) {
 	}
 	var sr *ServiceRegistry.ServiceRegistry
 	fmt.Fprintf(conn, "Hello!\n")
-	dec := gob.NewDecoder(conn)
+	dec := json.NewDecoder(conn)
 
 	for {
 		dec.Decode(&sr)
