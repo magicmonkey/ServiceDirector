@@ -11,12 +11,13 @@ import (
 )
 
 type listener struct {
-	connections []net.Conn
+	connections map[net.Addr]net.Conn
 }
 
 // Starts the replication listener, and sends any channel updates down the network connection
-func StartListener(sruc chan *ServiceRegistry.ServiceRegistry) {
+func StartListener(sruc chan *ServiceRegistry.ServiceRegistry, sr *ServiceRegistry.ServiceRegistry) {
 	l := new(listener)
+	l.connections = make(map[net.Addr]net.Conn)
 	ln, err := net.Listen("tcp", ":8083")
 	if err != nil {
 		panic(err)
@@ -28,7 +29,7 @@ func StartListener(sruc chan *ServiceRegistry.ServiceRegistry) {
 			panic(err)
 			continue
 		}
-		l.handleConnection(conn)
+		l.handleConnection(conn, sr)
 		go l.readFromConnection(conn)
 	}
 
@@ -46,9 +47,15 @@ func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) 
 	}
 }
 
-func (l *listener) handleConnection(conn net.Conn) {
-	log.Println("Got a connection")
-	l.connections = append(l.connections, conn)
+func (l *listener) handleConnection(conn net.Conn, sr *ServiceRegistry.ServiceRegistry) {
+	l.connections[conn.RemoteAddr()] = conn
+	log.Printf("Got a connection; there are now %d connections\n", len(l.connections))
+
+	// Send initial structure down the wire
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	enc.Encode(sr)
+	conn.Write(buf.Bytes())
 }
 
 // Writes a message to each connected client
@@ -78,12 +85,14 @@ func (l *listener) readFromConnection(conn net.Conn) {
 }
 
 func (l *listener) removeConnection(conn net.Conn) {
-	log.Println("[Replication master] Connection was closed")
+	delete(l.connections, conn.RemoteAddr())
+	log.Printf("[Replication master] Connection was closed; there are now %d connections", len(l.connections))
 }
 
-// Closes all connected clients
-func (l *listener) Close() {
-	for _, value := range l.connections {
-		value.Close()
-	}
-}
+//// Closes all connected clients
+//func (l *listener) Close() {
+//	for _, value := range l.connections {
+//		value.Close()
+//		delete(l.connections, value.RemoteAddr())
+//	}
+//}

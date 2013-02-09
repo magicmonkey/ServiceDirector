@@ -11,16 +11,15 @@ import (
 
 // Returns a handler for /services for the given Service Registry, allowing the URLs beneath /services to refer to the
 // services in that registry
-func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
+func getServiceHandler(sr **ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("HTTP: Got request for %v\n", r.URL.Path)
-
+		log.Printf("[HTTP] Got request for %v\n", r.URL.Path)
 		pathParts := strings.Split(r.URL.Path, "/")
 
 		if len(pathParts) == 4 {
 
 			// /services/TestService/1.2.4
-			svc, _ := sr.GetServiceWithName(pathParts[2], false)
+			svc, _ := (*sr).GetServiceWithName(pathParts[2], false)
 			if svc == nil {
 				http.Error(w, fmt.Sprintf(`No service found with name %v`, pathParts[2]), 400)
 				return
@@ -41,7 +40,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 }
 
 // Runs the actual HTTP server, ie calls http.ListenAndServe
-func RunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, c chan bool) {
+func RunHTTP(sr **ServiceRegistry.ServiceRegistry, listenAddr string, c chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc("/services/", getServiceHandler(sr))
 	log.Printf("[HTTP] Starting HTTP server on %v\n", listenAddr)

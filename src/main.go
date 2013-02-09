@@ -47,13 +47,13 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 	sr = p.LoadServiceRegistry("FirstRegistry")
 
 	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
-	go replication.StartListener(sru1)
+	go replication.StartListener(sru1, sr)
 	sr.RegisterUpdateChannel(sru2)
 	sr.RegisterUpdateChannel(sru1)
 
 	c1 := make(chan bool)
 	c2 := make(chan bool)
-	go http.RunHTTP(sr, httpAddr, c1)
+	go http.RunHTTP(&sr, httpAddr, c1)
 	go update.RunHTTP(sr, httpUpdateAddr, c2)
 
 	select {
@@ -65,13 +65,23 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 func runSlave(masterAddr string, httpAddr string) {
 
 	var sr *ServiceRegistry.ServiceRegistry
+	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
+
+	go replication.StartSlave(masterAddr, sru1)
 
 	log.Println("[Main] Master is", masterAddr)
 	c1 := make(chan bool)
-	go http.RunHTTP(sr, httpAddr, c1)
+	go http.RunHTTP(&sr, httpAddr, c1)
 
-	select {
-	case <-c1:
+	for {
+		select {
+		case <-c1:
+			log.Println("[Main] HTTP server has exited, so I might as well quit")
+			return
+		case sr = <-sru1:
+			log.Println("[Main] Got updated service registry")
+			//			log.Println(sr)
+		}
 	}
 
 	//	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", sru)
