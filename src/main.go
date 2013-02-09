@@ -62,7 +62,7 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 			return
 		case <-c2:
 			return
-		case <-time.After(3*time.Second):
+		case <-time.After(30*time.Second):
 			sru1 <- sr
 		}
 	}
