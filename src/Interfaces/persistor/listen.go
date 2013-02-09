@@ -50,6 +50,7 @@ func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
 	enc := gob.NewEncoder(&buf)
 	enc.Encode(sr)
 	c.Set(fmt.Sprintf("serviceregistry-%v", sr.Name), buf.String())
+	buf.Reset()
 }
 
 func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {

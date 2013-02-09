@@ -56,9 +56,15 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 	go http.RunHTTP(&sr, httpAddr, c1)
 	go update.RunHTTP(sr, httpUpdateAddr, c2)
 
-	select {
-	case <-c1:
-	case <-c2:
+	for {
+		select {
+		case <-c1:
+			return
+		case <-c2:
+			return
+		case <-time.After(3*time.Second):
+			sru1 <- sr
+		}
 	}
 }
 

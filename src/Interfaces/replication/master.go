@@ -44,6 +44,7 @@ func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) 
 		enc := gob.NewEncoder(&buf)
 		enc.Encode(msg1)
 		l.Write(buf.String())
+		buf.Reset()
 	}
 }
 
@@ -56,6 +57,7 @@ func (l *listener) handleConnection(conn net.Conn, sr *ServiceRegistry.ServiceRe
 	enc := gob.NewEncoder(&buf)
 	enc.Encode(sr)
 	conn.Write(buf.Bytes())
+	buf.Reset()
 }
 
 // Writes a message to each connected client
