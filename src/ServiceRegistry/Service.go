@@ -19,7 +19,7 @@ type Service struct {
 type ServiceRegistry struct {
 	Services   []*Service
 	Name string
-	serviceRegistryUpdateChan []chan *ServiceRegistry
+	serviceRegistryUpdateChan []chan ServiceRegistry
 }
 
 // An abstraction of the location of a service; currently only allows a URL to be used
@@ -27,7 +27,7 @@ type ServiceLocation struct {
 	Location string
 }
 
-func NewServiceRegistry(name string, sru chan *ServiceRegistry) (*ServiceRegistry) {
+func NewServiceRegistry(name string, sru chan ServiceRegistry) (*ServiceRegistry) {
 	sr := ServiceRegistry{}
 	sr.Name = name
 	sr.RegisterUpdateChannel(sru)
@@ -42,7 +42,7 @@ func NewLocation(u string) (*ServiceLocation) {
 
 func (sr *ServiceRegistry) SendRegistryUpdate() {
 	for _, c := range sr.serviceRegistryUpdateChan {
-		c <- sr
+		c <- *sr
 	}
 }
 
@@ -71,7 +71,7 @@ func (sr *ServiceRegistry) NewService(name string) (*Service) {
 	return s
 }
 
-func (sr *ServiceRegistry) RegisterUpdateChannel(sru chan *ServiceRegistry) {
+func (sr *ServiceRegistry) RegisterUpdateChannel(sru chan ServiceRegistry) {
 	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, sru)
 }
 

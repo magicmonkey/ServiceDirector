@@ -36,48 +36,53 @@ func main() {
 func runMaster(httpAddr string, httpUpdateAddr string) {
 
 	var sr *ServiceRegistry.ServiceRegistry
-
 	// The Persistor is the thing which saves any updates to Redis
 	// Also the initial ServiceRegistry is loaded from it
-	sru2 := make(chan *ServiceRegistry.ServiceRegistry)
+	sru1 := make(chan ServiceRegistry.ServiceRegistry)
 	p := persistor.NewPersistor()
-	go p.Listen(sru2)
+	go p.Listen(sru1)
 
 	// The Master is the thing which allows slaves to connect and get updates
 	sr = p.LoadServiceRegistry("FirstRegistry")
 
-	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
-	go replication.StartListener(sru1, sr)
-	sr.RegisterUpdateChannel(sru2)
-	sr.RegisterUpdateChannel(sru1)
+	sru2 := make(chan ServiceRegistry.ServiceRegistry)
+	go replication.StartListener(sru2)
 
-	c1 := make(chan bool)
-	c2 := make(chan bool)
-	go http.RunHTTP(&sr, httpAddr, c1)
-	go update.RunHTTP(sr, httpUpdateAddr, c2)
+	sru3 := make(chan ServiceRegistry.ServiceRegistry)
+
+	sr.RegisterUpdateChannel(sru1)
+	sr.RegisterUpdateChannel(sru2)
+	sr.RegisterUpdateChannel(sru3)
+
+	finished1 := make(chan bool)
+	finished2 := make(chan bool)
+	go http.RunHTTP(sru3, httpAddr, finished1)
+	go update.RunHTTP(sr, httpUpdateAddr, finished2)
 
 	for {
 		select {
-		case <-c1:
+		case <-finished1:
 			return
-		case <-c2:
+		case <-finished2:
 			return
 		case <-time.After(30*time.Second):
-			sru1 <- sr
+			sru1 <- *sr
 		}
 	}
+
 }
 
 func runSlave(masterAddr string, httpAddr string) {
 
 	var sr *ServiceRegistry.ServiceRegistry
 	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
-
 	go replication.StartSlave(masterAddr, sru1)
+
+	sru2 := make(chan ServiceRegistry.ServiceRegistry)
 
 	log.Println("[Main] Master is", masterAddr)
 	c1 := make(chan bool)
-	go http.RunHTTP(&sr, httpAddr, c1)
+	go http.RunHTTP(sru2, httpAddr, c1)
 
 	for {
 		select {
@@ -86,7 +91,7 @@ func runSlave(masterAddr string, httpAddr string) {
 			return
 		case sr = <-sru1:
 			log.Println("[Main] Got updated service registry")
-			//			log.Println(sr)
+			sru2 <- *sr
 		}
 	}
 

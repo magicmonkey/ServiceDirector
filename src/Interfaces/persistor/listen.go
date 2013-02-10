@@ -34,7 +34,7 @@ func (p *Persistor) getRedis() (*redis.Client) {
 	return p.redis
 }
 
-func (p *Persistor) Listen(sruc chan *ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) Listen(sruc chan ServiceRegistry.ServiceRegistry) {
 	log.Println("[Persistor] Listening for updates...")
 	for {
 		msg1 := <-sruc
@@ -44,7 +44,7 @@ func (p *Persistor) Listen(sruc chan *ServiceRegistry.ServiceRegistry) {
 
 }
 
-func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) saveServiceRegistry(sr ServiceRegistry.ServiceRegistry) {
 	c := p.getRedis()
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
