@@ -9,9 +9,13 @@ import (
 	"strings"
 )
 
+type httpBalancer struct {
+	sr     ServiceRegistry.ServiceRegistry
+}
+
 // Returns a handler for /services for the given Service Registry, allowing the URLs beneath /services to refer to the
 // services in that registry
-func getServiceHandler(sr **ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
+func (b *httpBalancer) serviceHandler () (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[HTTP] Got request for %v\n", r.URL.Path)
 		pathParts := strings.Split(r.URL.Path, "/")
@@ -19,7 +23,7 @@ func getServiceHandler(sr **ServiceRegistry.ServiceRegistry) (http.HandlerFunc) 
 		if len(pathParts) == 4 {
 
 			// /services/TestService/1.2.4
-			svc, _ := (*sr).GetServiceWithName(pathParts[2], false)
+			svc, _ := b.sr.GetServiceWithName(pathParts[2], false)
 			if svc == nil {
 				http.Error(w, fmt.Sprintf(`No service found with name %v`, pathParts[2]), 400)
 				return
@@ -35,17 +39,26 @@ func getServiceHandler(sr **ServiceRegistry.ServiceRegistry) (http.HandlerFunc) 
 
 		http.Error(w, `Request should be in the format /services/<service>/<version>`, 400)
 		return
+	}
+}
 
+func (b *httpBalancer) listenForUpdates (srChan chan ServiceRegistry.ServiceRegistry) {
+	for {
+		b.sr = <- srChan
+		log.Println("[HTTP] Got an updated service registry")
 	}
 }
 
 // Runs the actual HTTP server, ie calls http.ListenAndServe
-func RunHTTP(sr **ServiceRegistry.ServiceRegistry, listenAddr string, c chan bool) {
+func RunHTTP(srChan chan ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
+	h := new(httpBalancer)
+	go h.listenForUpdates(srChan)
+	requestUpdate<-true
 	sm := http.NewServeMux()
-	sm.HandleFunc("/services/", getServiceHandler(sr))
-	log.Printf("[HTTP] Starting HTTP server on %v\n", listenAddr)
+	sm.HandleFunc("/services/", h.serviceHandler())
+	log.Printf("[HTTP] Starting HTTP server on [%v]\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}
-	c<-true
+	finished<-true
 }

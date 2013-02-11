@@ -15,7 +15,7 @@ type listener struct {
 }
 
 // Starts the replication listener, and sends any channel updates down the network connection
-func StartListener(sruc chan *ServiceRegistry.ServiceRegistry, sr *ServiceRegistry.ServiceRegistry) {
+func StartListener(sruc chan ServiceRegistry.ServiceRegistry) {
 	l := new(listener)
 	l.connections = make(map[net.Addr]net.Conn)
 	ln, err := net.Listen("tcp", ":8083")
@@ -29,13 +29,13 @@ func StartListener(sruc chan *ServiceRegistry.ServiceRegistry, sr *ServiceRegist
 			panic(err)
 			continue
 		}
-		l.handleConnection(conn, sr)
+		l.handleConnection(conn)
 		go l.readFromConnection(conn)
 	}
 
 }
 
-func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) {
+func (l *listener) listenForUpdates(sruc chan ServiceRegistry.ServiceRegistry) {
 	var buf bytes.Buffer
 	log.Println("[Replication master] Listening for updates...")
 	for {
@@ -48,16 +48,16 @@ func (l *listener) listenForUpdates(sruc chan *ServiceRegistry.ServiceRegistry) 
 	}
 }
 
-func (l *listener) handleConnection(conn net.Conn, sr *ServiceRegistry.ServiceRegistry) {
+func (l *listener) handleConnection(conn net.Conn) {
 	l.connections[conn.RemoteAddr()] = conn
 	log.Printf("Got a connection; there are now %d connections\n", len(l.connections))
 
 	// Send initial structure down the wire
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.Encode(sr)
-	conn.Write(buf.Bytes())
-	buf.Reset()
+//	var buf bytes.Buffer
+//	enc := json.NewEncoder(&buf)
+//	enc.Encode(sr)
+//	conn.Write(buf.Bytes())
+//	buf.Reset()
 }
 
 // Writes a message to each connected client
