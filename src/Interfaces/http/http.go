@@ -50,12 +50,13 @@ func (b *httpBalancer) listenForUpdates (srChan chan ServiceRegistry.ServiceRegi
 }
 
 // Runs the actual HTTP server, ie calls http.ListenAndServe
-func RunHTTP(srChan chan ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool) {
+func RunHTTP(srChan chan ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
 	h := new(httpBalancer)
 	go h.listenForUpdates(srChan)
+	requestUpdate<-true
 	sm := http.NewServeMux()
 	sm.HandleFunc("/services/", h.serviceHandler())
-	log.Printf("[HTTP] Starting HTTP server on %v\n", listenAddr)
+	log.Printf("[HTTP] Starting HTTP server on [%v]\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
 	}

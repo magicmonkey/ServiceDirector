@@ -35,29 +35,32 @@ func main() {
 
 func runMaster(httpAddr string, httpUpdateAddr string) {
 
-	var sr *ServiceRegistry.ServiceRegistry
+	var sr ServiceRegistry.ServiceRegistry
+
 	// The Persistor is the thing which saves any updates to Redis
 	// Also the initial ServiceRegistry is loaded from it
-	sru1 := make(chan ServiceRegistry.ServiceRegistry)
+	sru1 := make(chan ServiceRegistry.ServiceRegistry, 10)
 	p := persistor.NewPersistor()
 	go p.Listen(sru1)
 
 	// The Master is the thing which allows slaves to connect and get updates
 	sr = p.LoadServiceRegistry("FirstRegistry")
 
-	sru2 := make(chan ServiceRegistry.ServiceRegistry)
+	sru2 := make(chan ServiceRegistry.ServiceRegistry, 10)
 	go replication.StartListener(sru2)
 
-	sru3 := make(chan ServiceRegistry.ServiceRegistry)
+	sru3 := make(chan ServiceRegistry.ServiceRegistry, 10)
 
 	sr.RegisterUpdateChannel(sru1)
 	sr.RegisterUpdateChannel(sru2)
 	sr.RegisterUpdateChannel(sru3)
 
-	finished1 := make(chan bool)
-	finished2 := make(chan bool)
-	go http.RunHTTP(sru3, httpAddr, finished1)
-	go update.RunHTTP(sr, httpUpdateAddr, finished2)
+	requestUpdate := make(chan bool, 10)
+
+	finished1 := make(chan bool, 10)
+	finished2 := make(chan bool, 10)
+	go http.RunHTTP(sru3, httpAddr, finished1, requestUpdate)
+	go update.RunHTTP(&sr, httpUpdateAddr, finished2, requestUpdate)
 
 	for {
 		select {
@@ -65,8 +68,11 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 			return
 		case <-finished2:
 			return
+		case <-requestUpdate:
+			log.Println("[Main] Someone has requested an update")
+			sr.SendRegistryUpdate()
 		case <-time.After(30*time.Second):
-			sru1 <- *sr
+			sru1 <- sr
 		}
 	}
 
@@ -81,12 +87,13 @@ func runSlave(masterAddr string, httpAddr string) {
 	sru2 := make(chan ServiceRegistry.ServiceRegistry)
 
 	log.Println("[Main] Master is", masterAddr)
-	c1 := make(chan bool)
-	go http.RunHTTP(sru2, httpAddr, c1)
+	finished := make(chan bool)
+	requestUpdate := make(chan bool)
+	go http.RunHTTP(sru2, httpAddr, finished, requestUpdate)
 
 	for {
 		select {
-		case <-c1:
+		case <-finished:
 			log.Println("[Main] HTTP server has exited, so I might as well quit")
 			return
 		case sr = <-sru1:

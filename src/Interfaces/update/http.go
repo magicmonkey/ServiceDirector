@@ -143,7 +143,7 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 }
 
 // Runs the actual HTTP server, ie spawns the goroutine via http.ListenAndServe
-func RunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, c chan bool) {
+func RunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc(`/services/`, getServiceHandler(sr))
 	log.Printf("[HTTP update] Starting HTTP server for updates on %v\n", listenAddr)
@@ -151,5 +151,5 @@ func RunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, c chan bool
 		panic(e)
 	}
 	log.Println("[HTTP update] *** FINISHED ***")
-	c<-true
+	finished<-true
 }

@@ -23,11 +23,12 @@ func NewPersistor() (*Persistor) {
 
 func (p *Persistor) getRedis() (*redis.Client) {
 	// Guard in case someone else is opening Redis
+	redisAddr := "localhost:6379"
 	m := sync.Mutex{}
 	m.Lock()
 	if !p.connected {
-		log.Println("[Persistor] Opening Redis...")
-		p.redis = redis.NewTCPClient("localhost:6379", "", 0)
+		log.Printf("[Persistor] Opening Redis at [%v]\n", redisAddr)
+		p.redis = redis.NewTCPClient(redisAddr, "", 0)
 		p.connected = true
 	}
 	m.Unlock()
@@ -37,14 +38,13 @@ func (p *Persistor) getRedis() (*redis.Client) {
 func (p *Persistor) Listen(sruc chan ServiceRegistry.ServiceRegistry) {
 	log.Println("[Persistor] Listening for updates...")
 	for {
-		msg1 := <-sruc
-		log.Println("[Persistor] Got an update")
-		p.saveServiceRegistry(msg1)
+		sr := <-sruc
+		log.Printf("[Persistor] Saving updated service registry [%v]\n", sr.Name)
+		p.saveServiceRegistry(&sr)
 	}
-
 }
 
-func (p *Persistor) saveServiceRegistry(sr ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
 	c := p.getRedis()
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -53,14 +53,14 @@ func (p *Persistor) saveServiceRegistry(sr ServiceRegistry.ServiceRegistry) {
 	buf.Reset()
 }
 
-func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {
-	log.Println("[Persistor] Loading a service registry called", name)
+func (p *Persistor) LoadServiceRegistry(name string) (ServiceRegistry.ServiceRegistry) {
+	log.Printf("[Persistor] Loading a service registry called [%v]\n", name)
 	c := p.getRedis()
 	srBytes := c.Get(fmt.Sprintf("serviceregistry-%v", name))
 	buf := bytes.NewBuffer([]byte(srBytes.Val()))
 	dec := gob.NewDecoder(buf)
 	sr := new(ServiceRegistry.ServiceRegistry)
-	dec.Decode(&sr)
+	dec.Decode(sr)
 	sr.Name = name
 
 	// Reconnect the up-tree references
@@ -68,5 +68,5 @@ func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRe
 		value.SetServiceRegistry(sr)
 	}
 
-	return sr
+	return *sr
 }
