@@ -33,34 +33,30 @@ func main() {
 	}
 }
 
+// The Master is the thing which allows slaves to connect and get updates
 func runMaster(httpAddr string, httpUpdateAddr string) {
 
 	var sr ServiceRegistry.ServiceRegistry
 
 	// The Persistor is the thing which saves any updates to Redis
 	// Also the initial ServiceRegistry is loaded from it
-	sru1 := make(chan ServiceRegistry.ServiceRegistry, 10)
 	p := persistor.NewPersistor()
-	go p.Listen(sru1)
+	sru1 := p.Listen()
 
-	// The Master is the thing which allows slaves to connect and get updates
 	sr = p.LoadServiceRegistry("FirstRegistry")
 
-	sru2 := make(chan ServiceRegistry.ServiceRegistry, 10)
-	go replication.StartListener(sru2)
+	rep := replication.NewMaster()
+	sru2 := rep.StartListener()
 
-	sru3 := make(chan ServiceRegistry.ServiceRegistry, 10)
+	h := http.NewBalancer()
+	finished1, requestUpdate1, sru3 := h.RunHTTP(httpAddr)
+
+	u := update.NewUpdater()
+	finished2, requestUpdate2 := u.RunHTTP(httpUpdateAddr, &sr)
 
 	sr.RegisterUpdateChannel(sru1)
 	sr.RegisterUpdateChannel(sru2)
 	sr.RegisterUpdateChannel(sru3)
-
-	requestUpdate := make(chan bool, 10)
-
-	finished1 := make(chan bool, 10)
-	finished2 := make(chan bool, 10)
-	go http.RunHTTP(sru3, httpAddr, finished1, requestUpdate)
-	go update.RunHTTP(&sr, httpUpdateAddr, finished2, requestUpdate)
 
 	for {
 		select {
@@ -68,8 +64,11 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 			return
 		case <-finished2:
 			return
-		case <-requestUpdate:
-			log.Println("[Main] Someone has requested an update")
+		case <-requestUpdate1:
+			log.Println("[Main] Someone (1) has requested an update")
+			sr.SendRegistryUpdate()
+		case <-requestUpdate2:
+			log.Println("[Main] Someone (2) has requested an update")
 			sr.SendRegistryUpdate()
 		case <-time.After(30*time.Second):
 			sru1 <- sr
@@ -84,18 +83,18 @@ func runSlave(masterAddr string, httpAddr string) {
 	sru1 := make(chan *ServiceRegistry.ServiceRegistry)
 	go replication.StartSlave(masterAddr, sru1)
 
-	sru2 := make(chan ServiceRegistry.ServiceRegistry)
-
 	log.Println("[Main] Master is", masterAddr)
-	finished := make(chan bool)
-	requestUpdate := make(chan bool)
-	go http.RunHTTP(sru2, httpAddr, finished, requestUpdate)
+
+	h := http.NewBalancer()
+	finished, requestUpdate, sru2 := h.RunHTTP(httpAddr)
 
 	for {
 		select {
 		case <-finished:
 			log.Println("[Main] HTTP server has exited, so I might as well quit")
 			return
+		case <-requestUpdate:
+			log.Println("[Main] Ignoring request for an update")
 		case sr = <-sru1:
 			log.Println("[Main] Got updated service registry")
 			sru2 <- *sr

@@ -10,7 +10,15 @@ import (
 	`log`
 )
 
-func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
+type Updater struct {
+}
+
+func NewUpdater() (u *Updater) {
+	u = new(Updater)
+	return
+}
+
+func (u *Updater) getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[HTTP update] Got %v request for %v\n", r.Method, r.URL.Path)
 
@@ -143,9 +151,19 @@ func getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.HandlerFunc) {
 }
 
 // Runs the actual HTTP server, ie spawns the goroutine via http.ListenAndServe
-func RunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
+func (u *Updater) RunHTTP (listenAddr string, sr *ServiceRegistry.ServiceRegistry) (finished chan bool, requestUpdate chan bool) {
+	finished = make(chan bool, 10)
+	requestUpdate = make(chan bool, 10)
+	go u.doRunHTTP(sr, listenAddr, finished, requestUpdate)
+	return
+}
+
+func (u *Updater) doRunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
 	sm := http.NewServeMux()
-	sm.HandleFunc(`/services/`, getServiceHandler(sr))
+	sm.HandleFunc(`/services/`, u.getServiceHandler(sr))
+	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "You probably wanted /services/")
+	})
 	log.Printf("[HTTP update] Starting HTTP server for updates on %v\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)

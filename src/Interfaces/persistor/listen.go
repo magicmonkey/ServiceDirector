@@ -35,10 +35,16 @@ func (p *Persistor) getRedis() (*redis.Client) {
 	return p.redis
 }
 
-func (p *Persistor) Listen(sruc chan ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) Listen() (updateChannel chan ServiceRegistry.ServiceRegistry) {
+	updateChannel = make(chan ServiceRegistry.ServiceRegistry, 10)
+	go p.doListen(updateChannel)
+	return
+}
+
+func (p *Persistor) doListen(updateChannel chan ServiceRegistry.ServiceRegistry) {
 	log.Println("[Persistor] Listening for updates...")
 	for {
-		sr := <-sruc
+		sr := <-updateChannel
 		log.Printf("[Persistor] Saving updated service registry [%v]\n", sr.Name)
 		p.saveServiceRegistry(&sr)
 	}

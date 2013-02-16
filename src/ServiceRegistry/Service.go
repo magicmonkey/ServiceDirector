@@ -4,7 +4,7 @@ package ServiceRegistry
 
 import (
 	"math/rand"
-//	"fmt"
+	"fmt"
 )
 
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
@@ -41,7 +41,9 @@ func NewLocation(u string) (*ServiceLocation) {
 }
 
 func (sr *ServiceRegistry) SendRegistryUpdate() {
+	fmt.Println(sr.serviceRegistryUpdateChan)
 	for _, c := range sr.serviceRegistryUpdateChan {
+		fmt.Println("Sending update...")
 		c <- *sr
 	}
 }

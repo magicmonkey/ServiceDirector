@@ -13,6 +13,11 @@ type httpBalancer struct {
 	sr     ServiceRegistry.ServiceRegistry
 }
 
+func NewBalancer() (h *httpBalancer) {
+	h = new(httpBalancer)
+	return
+}
+
 // Returns a handler for /services for the given Service Registry, allowing the URLs beneath /services to refer to the
 // services in that registry
 func (b *httpBalancer) serviceHandler () (http.HandlerFunc) {
@@ -50,12 +55,22 @@ func (b *httpBalancer) listenForUpdates (srChan chan ServiceRegistry.ServiceRegi
 }
 
 // Runs the actual HTTP server, ie calls http.ListenAndServe
-func RunHTTP(srChan chan ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
-	h := new(httpBalancer)
-	go h.listenForUpdates(srChan)
+func (h *httpBalancer) RunHTTP(listenAddr string) (finished chan bool, requestUpdate chan bool, updateChannel chan ServiceRegistry.ServiceRegistry) {
+	finished = make(chan bool, 10)
+	requestUpdate = make(chan bool, 10)
+	updateChannel = make(chan ServiceRegistry.ServiceRegistry, 10)
+	go h.doRunHTTP(listenAddr, finished, requestUpdate, updateChannel)
+	return
+}
+
+func (h *httpBalancer) doRunHTTP(listenAddr string, finished chan bool, requestUpdate chan bool, updateChannel chan ServiceRegistry.ServiceRegistry) {
+	go h.listenForUpdates(updateChannel)
 	requestUpdate<-true
 	sm := http.NewServeMux()
 	sm.HandleFunc("/services/", h.serviceHandler())
+	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "You probably wanted /services/")
+	})
 	log.Printf("[HTTP] Starting HTTP server on [%v]\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
