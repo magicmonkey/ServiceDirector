@@ -36,7 +36,7 @@ func main() {
 // The Master is the thing which allows slaves to connect and get updates
 func runMaster(httpAddr string, httpUpdateAddr string) {
 
-	var sr ServiceRegistry.ServiceRegistry
+	var sr *ServiceRegistry.ServiceRegistry
 
 	// The Persistor is the thing which saves any updates to Redis
 	// Also the initial ServiceRegistry is loaded from it
@@ -49,10 +49,10 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 	sru2 := rep.StartListener()
 
 	h := http.NewBalancer()
-	finished1, requestUpdate1, sru3 := h.RunHTTP(httpAddr)
+	finished1, requestUpdate, sru3 := h.RunHTTP(httpAddr)
 
 	u := update.NewUpdater()
-	finished2, requestUpdate2 := u.RunHTTP(httpUpdateAddr, &sr)
+	finished2 := u.RunHTTP(httpUpdateAddr, sr)
 
 	sr.RegisterUpdateChannel(sru1)
 	sr.RegisterUpdateChannel(sru2)
@@ -64,14 +64,11 @@ func runMaster(httpAddr string, httpUpdateAddr string) {
 			return
 		case <-finished2:
 			return
-		case <-requestUpdate1:
-			log.Println("[Main] Someone (1) has requested an update")
-			sr.SendRegistryUpdate()
-		case <-requestUpdate2:
-			log.Println("[Main] Someone (2) has requested an update")
+		case <-requestUpdate:
+			log.Println("[Main] Someone has requested an update")
 			sr.SendRegistryUpdate()
 		case <-time.After(30*time.Second):
-			sru1 <- sr
+			sru1 <- *sr
 		}
 	}
 

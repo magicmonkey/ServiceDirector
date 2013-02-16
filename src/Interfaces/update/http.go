@@ -151,14 +151,13 @@ func (u *Updater) getServiceHandler(sr *ServiceRegistry.ServiceRegistry) (http.H
 }
 
 // Runs the actual HTTP server, ie spawns the goroutine via http.ListenAndServe
-func (u *Updater) RunHTTP (listenAddr string, sr *ServiceRegistry.ServiceRegistry) (finished chan bool, requestUpdate chan bool) {
+func (u *Updater) RunHTTP (listenAddr string, sr *ServiceRegistry.ServiceRegistry) (finished chan bool) {
 	finished = make(chan bool, 10)
-	requestUpdate = make(chan bool, 10)
-	go u.doRunHTTP(sr, listenAddr, finished, requestUpdate)
+	go u.doRunHTTP(sr, listenAddr, finished)
 	return
 }
 
-func (u *Updater) doRunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool, requestUpdate chan bool) {
+func (u *Updater) doRunHTTP(sr *ServiceRegistry.ServiceRegistry, listenAddr string, finished chan bool) {
 	sm := http.NewServeMux()
 	sm.HandleFunc(`/services/`, u.getServiceHandler(sr))
 	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -59,7 +59,7 @@ func (p *Persistor) saveServiceRegistry(sr *ServiceRegistry.ServiceRegistry) {
 	buf.Reset()
 }
 
-func (p *Persistor) LoadServiceRegistry(name string) (ServiceRegistry.ServiceRegistry) {
+func (p *Persistor) LoadServiceRegistry(name string) (*ServiceRegistry.ServiceRegistry) {
 	log.Printf("[Persistor] Loading a service registry called [%v]\n", name)
 	c := p.getRedis()
 	srBytes := c.Get(fmt.Sprintf("serviceregistry-%v", name))
@@ -74,5 +74,5 @@ func (p *Persistor) LoadServiceRegistry(name string) (ServiceRegistry.ServiceReg
 		value.SetServiceRegistry(sr)
 	}
 
-	return *sr
+	return sr
 }

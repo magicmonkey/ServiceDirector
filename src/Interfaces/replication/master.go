@@ -62,7 +62,7 @@ func (l *listener) listenForUpdates(sruc chan ServiceRegistry.ServiceRegistry) {
 
 func (l *listener) handleConnection(conn net.Conn) {
 	l.connections[conn.RemoteAddr()] = conn
-	log.Printf("Got a connection; there are now %d connections\n", len(l.connections))
+	log.Printf("[Replication master] Got a connection; there are now %d connections\n", len(l.connections))
 
 	// Send initial structure down the wire
 	var buf bytes.Buffer

@@ -4,7 +4,7 @@ package ServiceRegistry
 
 import (
 	"math/rand"
-	"fmt"
+	"log"
 )
 
 // An API, of which there may be many versions, each of which may have many locations across which you want to balance
@@ -41,9 +41,9 @@ func NewLocation(u string) (*ServiceLocation) {
 }
 
 func (sr *ServiceRegistry) SendRegistryUpdate() {
-	fmt.Println(sr.serviceRegistryUpdateChan)
+	log.Printf("[Service] Send update to all concerned (from %v)\n", sr)
 	for _, c := range sr.serviceRegistryUpdateChan {
-		fmt.Println("Sending update...")
+		log.Println("[Service] Sending update...")
 		c <- *sr
 	}
 }
@@ -74,7 +74,9 @@ func (sr *ServiceRegistry) NewService(name string) (*Service) {
 }
 
 func (sr *ServiceRegistry) RegisterUpdateChannel(sru chan ServiceRegistry) {
+	log.Println("[Service] Adding update channel...")
 	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, sru)
+	log.Printf("[Service] Channels are now %v\n", sr)
 }
 
 func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
