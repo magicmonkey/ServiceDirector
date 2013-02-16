@@ -76,7 +76,6 @@ func (sr *ServiceRegistry) NewService(name string) (*Service) {
 func (sr *ServiceRegistry) RegisterUpdateChannel(sru chan ServiceRegistry) {
 	log.Println("[Service] Adding update channel...")
 	sr.serviceRegistryUpdateChan = append(sr.serviceRegistryUpdateChan, sru)
-	log.Printf("[Service] Channels are now %v\n", sr)
 }
 
 func (s *Service) GetLocationsForVersion(v Version) ([]*ServiceLocation) {
