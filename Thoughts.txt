@@ -1,4 +1,3 @@
-* Replication between nodes based on Gob
 * Can allow or disallow writing to slave nodes
 * API health-checks
 * Monitoring by an external program (eg OpsView)
