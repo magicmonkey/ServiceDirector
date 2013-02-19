@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"ServiceRegistry"
-	"strings"
+	"github.com/gorilla/mux"
 )
 
 type httpBalancer struct {
@@ -21,30 +21,26 @@ func NewBalancer() (h *httpBalancer) {
 // Returns a handler for /services for the given Service Registry, allowing the URLs beneath /services to refer to the
 // services in that registry
 func (b *httpBalancer) serviceHandler () (http.HandlerFunc) {
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[HTTP] Got request for %v\n", r.URL.Path)
-		pathParts := strings.Split(r.URL.Path, "/")
+		vars := mux.Vars(r)
 
-		if len(pathParts) == 4 {
-
-			// /services/TestService/1.2.4
-			svc, _ := b.sr.GetServiceWithName(pathParts[2], false)
-			if svc == nil {
-				http.Error(w, fmt.Sprintf(`No service found with name %v`, pathParts[2]), 400)
-				return
-			}
-			svs := svc.GetLocationForVersionString(pathParts[3])
-			if svs == nil {
-				http.Error(w, fmt.Sprintf(`Found service with name %v but could not find an instance with version %v`, pathParts[2], pathParts[3]), 400)
-				return
-			}
-			fmt.Fprintln(w, svs.Location)
+		// /services/TestService/1.2.4
+		svc, _ := b.sr.GetServiceWithName(vars["service"], false)
+		if svc == nil {
+			http.Error(w, fmt.Sprintf(`No service found with name %v`, vars["service"]), 400)
 			return
 		}
-
-		http.Error(w, `Request should be in the format /services/<service>/<version>`, 400)
+		svs := svc.GetLocationForVersionString(vars["version"])
+		if svs == nil {
+			http.Error(w, fmt.Sprintf(`Found service with name %v but could not find an instance with version %v`, vars["service"], vars["version"]), 400)
+			return
+		}
+		fmt.Fprintln(w, svs.Location)
 		return
 	}
+
 }
 
 func (b *httpBalancer) listenForUpdates (srChan chan ServiceRegistry.ServiceRegistry) {
@@ -66,11 +62,18 @@ func (h *httpBalancer) RunHTTP(listenAddr string) (finished chan bool, requestUp
 func (h *httpBalancer) doRunHTTP(listenAddr string, finished chan bool, requestUpdate chan bool, updateChannel chan ServiceRegistry.ServiceRegistry) {
 	go h.listenForUpdates(updateChannel)
 	requestUpdate<-true
+
+	r := mux.NewRouter()
+
 	sm := http.NewServeMux()
-	sm.HandleFunc("/services/", h.serviceHandler())
-	sm.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "You probably wanted /services/")
+	r.HandleFunc("/services/{service}/{version}", h.serviceHandler())
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, `Request should be in the format /services/<service>/<version>`, 400)
 	})
+
+	sm.Handle("/", r)
+
 	log.Printf("[HTTP] Starting HTTP server on [%v]\n", listenAddr)
 	if e := http.ListenAndServe(listenAddr, sm); e != nil {
 		panic(e)
