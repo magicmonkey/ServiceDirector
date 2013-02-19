@@ -98,7 +98,4 @@ func runSlave(masterAddr string, httpAddr string) {
 		}
 	}
 
-	//	sr := ServiceRegistry.NewServiceRegistry("FirstRegistry", sru)
-	//	sr.GenerateTestData()
-
 }
