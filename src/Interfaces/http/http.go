@@ -10,7 +10,7 @@ import (
 )
 
 type httpBalancer struct {
-	sr     ServiceRegistry.ServiceRegistry
+	sr ServiceRegistry.ServiceRegistry
 }
 
 func NewBalancer() (h *httpBalancer) {
